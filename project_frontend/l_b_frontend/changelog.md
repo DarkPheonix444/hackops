@@ -1,0 +1,136 @@
+# Changelog
+
+## [3.0.1] - 22/02/2026
+
+- Fixed CI build failure by restoring direct `uuid` dependency used in users/forms flows.
+- Verified release checks after fix (`lint`, `build`, `test`) to keep pipeline green.
+
+## [3.0.0] - 22/02/2026
+
+- Migrated build tooling from CRA/rewired to Vite (`dev`, `build`, `preview`) with npm-only workflow.
+- Upgraded runtime stack to modern baseline: React Router 7 + Vite 7 + SWC React plugin.
+- Removed legacy runtime layers (`connected-react-router`, old router/history glue, Babel project config, CRA polyfill path).
+- Completed active-code UI modernization: no legacy `@material-ui/*`, class components migrated to hooks in active paths.
+- Restored and modernized maps using `leaflet` + `react-leaflet` + `topojson-client`.
+- Added smoke test coverage on critical routes (login, dashboard, users) with Vitest.
+- Added CI quality gates (`lint`, `build`, `test`) and cleaned eslint output to zero warnings/errors.
+- Refreshed README and modernization plan docs to match the current stack and release workflow.
+
+## [2.4.1] - 22/11/2024
+
+- Updated dependencies
+
+## [2.4.0] - 10/09/2024
+
+- Added react-scripts version 5 along with webpack version 5 support.
+- Added support for node.js version > 20
+- Removed old webpack configs.
+- Removed unnecessary dev dependencies.
+
+# [2.3.4] - 20/12/2023
+
+- Update dependencies
+
+# [2.3.3] - 16/05/2023
+
+- Update dependencies
+- Update react version
+
+# [2.3.2] - 20/07/2022
+
+- Fix ecommerce editing
+
+# [2.3.1] - 18/07/2022
+
+- Fix users management
+
+# [2.3.0] - 01/06/2022
+
+- Updated from MUI4 to MUI5, fixed Dark Theme
+- Fixed Grid actions
+- Fixed various bugs related to DataGrid
+- Updated packages
+
+# [2.2.5] - 05/03/2021
+
+- Fixed errors
+- Clear code
+- Hide warnings
+
+# [2.2.4]
+
+- Updated documentation
+
+# [2.2.3]
+
+### New Features
+- Added Profile page
+- Added Grid page
+- Updated packages
+- Updated README.md
+
+# [2.1.3]
+
+### Updated
+- Added link to flatlogic on login and register pages
+
+# [2.1.2]
+
+### Updated
+- Updated fullcalendar package to v5.3.0
+
+# [2.1.1]
+
+### Improved
+- Improved css
+
+# [2.1.0]
+
+### New Features
+- Added upload image functionality
+
+# [2.0.0]
+
+### New Features
+- Added user management table
+- Added register functionality
+- Added reset password functionality
+- User invitation functionality
+- Social Login
+
+# [1.2.1]
+
+### Fixed
+- JWT token checking fix
+
+### Updated
+- Update scrollbar color on Windows devices
+- Some color improvements
+
+# [1.1.1]
+
+### Updated
+- Adjust unused libs imports
+- Updated Docs
+- Minor components updates
+
+### New Features
+- Docs full update
+
+### Fixed
+- Wrappers of the components fix
+- Performance improve
+
+## [1.1.0]
+
+### Fixed
+
+- set localStorage item of theme
+
+### Updated
+
+- redux updates
+
+## [1.0.0]
+
+Initial version of the project
