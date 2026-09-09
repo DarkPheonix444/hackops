@@ -21,7 +21,9 @@ import ColorChangeThemePopper from './components/ColorChangeThemePopper';
 import EditUser from '../../pages/user/EditUser';
 
 // pages
-import Dashboard from '../../pages/dashboard';
+import RoleDashboard from '../../pages/dashboard/RoleDashboard';
+import BorrowerDashboard from '../../pages/dashboard/BorrowerDashboard';
+import LenderDashboard from '../../pages/dashboard/LenderDashboard';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import CompanyDashboard from '../../pages/company/CompanyDashboard';
 import BorrowerReviewPage from '../../pages/company/BorrowerReviewPage';
@@ -115,7 +117,10 @@ function Layout() {
         <div className={classes.fakeToolbar} />
         <BreadCrumbs />
         <Routes>
-          <Route path='dashboard' element={<Dashboard />} />
+          <Route path='dashboard' element={<RoleDashboard />} />
+          <Route path='dashboard/borrower' element={<BorrowerDashboard />} />
+          <Route path='dashboard/lender' element={<LenderDashboard />} />
+          <Route path='dashboard/company' element={<CompanyDashboard />} />
           <Route path='admin' element={<AdminDashboard />} />
           <Route path='company' element={<CompanyDashboard />} />
           <Route path='company/borrowers/:borrowerId' element={<BorrowerReviewPage />} />

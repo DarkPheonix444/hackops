@@ -73,13 +73,13 @@ const demoLenderRequests = [
   },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ roleOverride = null }) {
   const navigate = useNavigate();
   const { currentUser, userRole } = useUserState();
   const [userDetails, setUserDetails] = useState(currentUser);
 
   // Active view perspective: 'borrower' or 'lender'
-  const activeTab = userRole || 'borrower';
+  const activeTab = roleOverride || userRole || 'borrower';
 
   useEffect(() => {
     let mounted = true;
