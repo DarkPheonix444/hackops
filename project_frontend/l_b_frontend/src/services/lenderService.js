@@ -16,6 +16,16 @@ export const lenderService = {
     return response.data;
   },
 
+  async evaluateApplication(id) {
+    const response = await api.post(`/lender/evaluate/${id}/`);
+    return response.data;
+  },
+
+  async saveProfile(profileData) {
+    const response = await api.post('/lender/profile/', profileData);
+    return response.data;
+  },
+
   async submitDecision(id, action, notes = '') {
     const response = await api.post(`/lender/decision/${id}/`, {
       action,
