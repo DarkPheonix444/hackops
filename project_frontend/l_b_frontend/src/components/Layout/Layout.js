@@ -88,7 +88,11 @@ import structure from '../Sidebar/SidebarStructure';
 
 function Layout() {
   const classes = useStyles();
-  const { userRole } = useUserState();
+  const { currentUser, userRole } = useUserState();
+  const effectiveRole =
+    currentUser?.is_staff || currentUser?.is_superuser
+      ? 'admin'
+      : currentUser?.role || userRole || 'borrower';
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const open = Boolean(anchorEl);
@@ -105,7 +109,8 @@ function Layout() {
       <Header />
       <Sidebar
         structure={structure.filter((item) => {
-          if (item.role && item.role !== userRole) return false;
+          if (item.roles && !item.roles.includes(effectiveRole)) return false;
+          if (item.role && item.role !== effectiveRole) return false;
           return true;
         })}
       />
@@ -118,14 +123,14 @@ function Layout() {
         <BreadCrumbs />
         <Routes>
           <Route path='dashboard' element={<RoleDashboard />} />
-          <Route path='dashboard/borrower' element={<BorrowerDashboard />} />
-          <Route path='dashboard/lender' element={<LenderDashboard />} />
-          <Route path='dashboard/company' element={<CompanyDashboard />} />
-          <Route path='admin' element={<AdminDashboard />} />
-          <Route path='company' element={<CompanyDashboard />} />
-          <Route path='company/borrowers/:borrowerId' element={<BorrowerReviewPage />} />
-          <Route path='verification' element={<VerificationPage />} />
-          <Route path='loan-forms' element={<LoanPartyForms />} />
+          <Route path='dashboard/borrower' element={<RoleOnly roles={['borrower']}><BorrowerDashboard /></RoleOnly>} />
+          <Route path='dashboard/lender' element={<RoleOnly roles={['lender']}><LenderDashboard /></RoleOnly>} />
+          <Route path='dashboard/company' element={<RoleOnly roles={['company']}><CompanyDashboard /></RoleOnly>} />
+          <Route path='admin' element={<RoleOnly roles={['admin']}><AdminDashboard /></RoleOnly>} />
+          <Route path='company' element={<RoleOnly roles={['company']}><CompanyDashboard /></RoleOnly>} />
+          <Route path='company/borrowers/:borrowerId' element={<RoleOnly roles={['company']}><BorrowerReviewPage /></RoleOnly>} />
+          <Route path='verification' element={<RoleOnly roles={['borrower', 'lender']}><VerificationPage /></RoleOnly>} />
+          <Route path='loan-forms' element={<RoleOnly roles={['borrower', 'lender']}><LoanPartyForms /></RoleOnly>} />
           <Route path='profile' element={<Profile />} />
           <Route path='user/edit' element={<EditUser />} />
 
@@ -286,6 +291,16 @@ function Layout() {
       </div>
     </div>
   );
+}
+
+function RoleOnly({ roles, children }) {
+  const { currentUser, userRole } = useUserState();
+  const role =
+    currentUser?.is_staff || currentUser?.is_superuser
+      ? 'admin'
+      : currentUser?.role || userRole || 'borrower';
+
+  return roles.includes(role) ? children : <Navigate to='/app/dashboard' replace />;
 }
 
 export default Layout;

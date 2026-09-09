@@ -29,6 +29,8 @@ class CurrentUserView(APIView):
             'email': user.email,
             'name': user.name,
             'role': role,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
         }, status=status.HTTP_200_OK)
 
 # Create your views here.
