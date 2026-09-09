@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 
 from django.urls import path
 
@@ -27,10 +26,8 @@ urlpatterns = [
         SubmitBorrowerApplicationView.as_view(),
         name="borrower-submit"
     ),
-=======
 from django.urls import path
 
 urlpatterns = [
     # Borrower endpoint routes
->>>>>>> cd0fa131647097f65dd5dd98a6785940caa26813
 ]

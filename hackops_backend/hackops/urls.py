@@ -25,13 +25,10 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(serializer_class=CustomTokenObtainPairSerializer), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/users/', include('users.urls')),
-<<<<<<< HEAD
     path(
         "api/borrower/",
         include("borrower.urls")
     ),
-=======
     path('api/borrower/', include('borrower.urls')),
     path('api/lender/', include('lender.urls')),
->>>>>>> cd0fa131647097f65dd5dd98a6785940caa26813
 ]
