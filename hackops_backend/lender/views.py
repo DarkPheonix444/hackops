@@ -24,9 +24,13 @@ class LenderFeedView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        applications = LoanApplication.objects.filter(
-            status__in=['DOCS_VERIFIED', 'READY_FOR_LENDER']
-        ).order_by('-created_at')
+        show_all = request.query_params.get('all') == 'true' or getattr(request.user, 'is_staff', False)
+        if show_all:
+            applications = LoanApplication.objects.all().order_by('-created_at')
+        else:
+            applications = LoanApplication.objects.filter(
+                status__in=['DOCS_VERIFIED', 'READY_FOR_LENDER']
+            ).order_by('-created_at')
         
         serializer = VerifiedLoanApplicationSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

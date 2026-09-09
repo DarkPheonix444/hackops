@@ -40,6 +40,8 @@ import {
   VerifiedUser as VerifiedIcon,
   Send as SendIcon,
   Edit as EditIcon,
+  FactCheck as FactCheckIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 
 // context
@@ -181,6 +183,14 @@ export default function Dashboard() {
 
   // Handle Tab / Role Switch
   const handleTabChange = (event, newTab) => {
+    if (newTab === 'admin') {
+      navigate('/app/admin');
+      return;
+    }
+    if (newTab === 'company') {
+      navigate('/app/company');
+      return;
+    }
     setActiveTab(newTab);
     switchUserRole(userDispatch, newTab);
   };
@@ -501,6 +511,30 @@ export default function Dashboard() {
               label='Lender Portal (Marketplace Feed & Decisions)'
               style={{
                 color: activeTab === 'lender' ? '#10b981' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+            <Tab
+              value='company'
+              icon={<FactCheckIcon />}
+              iconPosition='start'
+              label='Company Verification (Underwriting & OCR Audit)'
+              style={{
+                color: '#38bdf8',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+            <Tab
+              value='admin'
+              icon={<AdminIcon />}
+              iconPosition='start'
+              label='Admin Command Center (Validate Requests)'
+              style={{
+                color: '#c084fc',
                 fontWeight: 700,
                 fontSize: 14,
                 textTransform: 'none',

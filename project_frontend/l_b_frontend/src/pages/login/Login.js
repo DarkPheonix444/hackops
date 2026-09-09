@@ -20,6 +20,8 @@ import {
   CheckCircle as CheckCircleIcon,
   ArrowBack as ArrowBackIcon,
   VerifiedUser as TrustIcon,
+  AdminPanelSettings as AdminIcon,
+  Bolt as BoltIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 
@@ -83,6 +85,13 @@ export default function Login() {
       loginValue.trim().length !== 0 &&
       passwordValue.length >= 6
     );
+  };
+
+  const handleFillAdminDemo = () => {
+    setSelectedRole('admin');
+    setLoginValue('admin@trustlens.ai');
+    setPasswordValue('password123');
+    setError(null);
   };
 
   const handleLogin = () => {
@@ -291,17 +300,37 @@ export default function Login() {
                 />
               </Tabs>
 
-              {/* ROLE SELECTION (MANDATORY REQUIREMENT) */}
+              {/* ROLE SELECTION */}
               <Box mb={3}>
-                <Typography
-                  variant='body2'
-                  style={{ color: '#cbd5e1', fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}
-                >
-                  Select Your Portal Role:
-                </Typography>
-                <Grid container spacing={2}>
+                <Box display='flex' justifyContent='space-between' alignItems='center' mb={1}>
+                  <Typography
+                    variant='body2'
+                    style={{ color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 12 }}
+                  >
+                    Select Your Portal Role:
+                  </Typography>
+                  <Button
+                    size='small'
+                    variant='text'
+                    onClick={handleFillAdminDemo}
+                    startIcon={<BoltIcon style={{ fontSize: 14, color: '#a855f7' }} />}
+                    style={{
+                      color: '#c084fc',
+                      textTransform: 'none',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      background: 'rgba(168, 85, 247, 0.1)',
+                      borderRadius: 6,
+                    }}
+                  >
+                    Demo Admin Autofill
+                  </Button>
+                </Box>
+
+                <Grid container spacing={1.5}>
                   {/* Borrower Card */}
-                  <Grid size={{ xs: 6 }}>
+                  <Grid size={{ xs: 4 }}>
                     <Card
                       style={{
                         background:
@@ -318,12 +347,12 @@ export default function Login() {
                     >
                       <CardActionArea
                         onClick={() => setSelectedRole('borrower')}
-                        style={{ padding: '14px 10px', textAlign: 'center' }}
+                        style={{ padding: '12px 6px', textAlign: 'center' }}
                       >
                         <Box display='flex' justifyContent='center' alignItems='center' position='relative'>
                           <BorrowerIcon
                             style={{
-                              fontSize: 32,
+                              fontSize: 28,
                               color: selectedRole === 'borrower' ? '#38bdf8' : '#94a3b8',
                               marginBottom: 4,
                             }}
@@ -334,34 +363,34 @@ export default function Login() {
                                 position: 'absolute',
                                 right: 0,
                                 top: 0,
-                                fontSize: 18,
+                                fontSize: 16,
                                 color: '#38bdf8',
                               }}
                             />
                           )}
                         </Box>
                         <Typography
-                          variant='subtitle1'
+                          variant='subtitle2'
                           style={{
                             fontWeight: 700,
                             color: selectedRole === 'borrower' ? '#fff' : '#cbd5e1',
+                            fontSize: 13,
                           }}
                         >
                           Borrower
                         </Typography>
                         <Typography
                           variant='caption'
-                          style={{ color: '#94a3b8', display: 'block', fontSize: 11, marginTop: 2 }}
+                          style={{ color: '#94a3b8', display: 'block', fontSize: 10, marginTop: 2 }}
                         >
-                          Apply for loans & upload KYC
+                          Apply & upload KYC
                         </Typography>
                       </CardActionArea>
                     </Card>
                   </Grid>
 
                   {/* Lender Card */}
-                  <Grid size={{ xs: 6 }}>
-
+                  <Grid size={{ xs: 4 }}>
                     <Card
                       style={{
                         background:
@@ -378,12 +407,12 @@ export default function Login() {
                     >
                       <CardActionArea
                         onClick={() => setSelectedRole('lender')}
-                        style={{ padding: '14px 10px', textAlign: 'center' }}
+                        style={{ padding: '12px 6px', textAlign: 'center' }}
                       >
                         <Box display='flex' justifyContent='center' alignItems='center' position='relative'>
                           <LenderIcon
                             style={{
-                              fontSize: 32,
+                              fontSize: 28,
                               color: selectedRole === 'lender' ? '#10b981' : '#94a3b8',
                               marginBottom: 4,
                             }}
@@ -394,26 +423,87 @@ export default function Login() {
                                 position: 'absolute',
                                 right: 0,
                                 top: 0,
-                                fontSize: 18,
+                                fontSize: 16,
                                 color: '#10b981',
                               }}
                             />
                           )}
                         </Box>
                         <Typography
-                          variant='subtitle1'
+                          variant='subtitle2'
                           style={{
                             fontWeight: 700,
                             color: selectedRole === 'lender' ? '#fff' : '#cbd5e1',
+                            fontSize: 13,
                           }}
                         >
                           Lender
                         </Typography>
                         <Typography
                           variant='caption'
-                          style={{ color: '#94a3b8', display: 'block', fontSize: 11, marginTop: 2 }}
+                          style={{ color: '#94a3b8', display: 'block', fontSize: 10, marginTop: 2 }}
                         >
-                          Review feed & fund requests
+                          Feed & fund loans
+                        </Typography>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+
+                  {/* Admin Card */}
+                  <Grid size={{ xs: 4 }}>
+                    <Card
+                      style={{
+                        background:
+                          selectedRole === 'admin'
+                            ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(126, 34, 206, 0.15) 100%)'
+                            : 'rgba(15, 23, 42, 0.6)',
+                        border:
+                          selectedRole === 'admin'
+                            ? '2px solid #a855f7'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 12,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <CardActionArea
+                        onClick={() => setSelectedRole('admin')}
+                        style={{ padding: '12px 6px', textAlign: 'center' }}
+                      >
+                        <Box display='flex' justifyContent='center' alignItems='center' position='relative'>
+                          <AdminIcon
+                            style={{
+                              fontSize: 28,
+                              color: selectedRole === 'admin' ? '#c084fc' : '#94a3b8',
+                              marginBottom: 4,
+                            }}
+                          />
+                          {selectedRole === 'admin' && (
+                            <CheckCircleIcon
+                              style={{
+                                position: 'absolute',
+                                right: 0,
+                                top: 0,
+                                fontSize: 16,
+                                color: '#c084fc',
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <Typography
+                          variant='subtitle2'
+                          style={{
+                            fontWeight: 700,
+                            color: selectedRole === 'admin' ? '#fff' : '#cbd5e1',
+                            fontSize: 13,
+                          }}
+                        >
+                          Admin
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          style={{ color: '#94a3b8', display: 'block', fontSize: 10, marginTop: 2 }}
+                        >
+                          Audit & validate all
                         </Typography>
                       </CardActionArea>
                     </Card>

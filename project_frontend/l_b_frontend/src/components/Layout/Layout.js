@@ -22,6 +22,9 @@ import EditUser from '../../pages/user/EditUser';
 
 // pages
 import Dashboard from '../../pages/dashboard';
+import AdminDashboard from '../../pages/admin/AdminDashboard';
+import CompanyDashboard from '../../pages/company/CompanyDashboard';
+import BorrowerReviewPage from '../../pages/company/BorrowerReviewPage';
 import Profile from '../../pages/profile';
 import VerificationPage from '../../pages/verification/VerificationPage';
 import LoanPartyForms from '../../pages/forms/LoanPartyForms';
@@ -106,6 +109,9 @@ function Layout() {
         <BreadCrumbs />
         <Routes>
           <Route path='dashboard' element={<Dashboard />} />
+          <Route path='admin' element={<AdminDashboard />} />
+          <Route path='company' element={<CompanyDashboard />} />
+          <Route path='company/borrowers/:borrowerId' element={<BorrowerReviewPage />} />
           <Route path='verification' element={<VerificationPage />} />
           <Route path='loan-forms' element={<LoanPartyForms />} />
           <Route path='profile' element={<Profile />} />

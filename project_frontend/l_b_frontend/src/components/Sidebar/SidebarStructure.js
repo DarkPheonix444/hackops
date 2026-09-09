@@ -17,6 +17,8 @@ import {
   Person as PersonIcon,
   AccountCircle as ProfileIcon,
   VerifiedUser as VerifiedUserIcon,
+  FactCheck as FactCheckIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import ChatIcon from '@mui/icons-material/Chat';
 import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
@@ -30,6 +32,22 @@ const structure = [
     label: 'Lending Dashboard',
     link: '/app/dashboard',
     icon: <HomeIcon />,
+  },
+  {
+    id: 93,
+    label: 'Admin Portal',
+    link: '/app/admin',
+    icon: <AdminIcon />,
+    badge: 'Master',
+    badgeColor: 'secondary',
+  },
+  {
+    id: 94,
+    label: 'Company Verification',
+    link: '/app/company',
+    icon: <FactCheckIcon />,
+    badge: 'Intel',
+    badgeColor: 'warning',
   },
   {
     id: 95,
