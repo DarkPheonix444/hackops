@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
     "rest_framework",
     "users",
+    "borrower",
+    "lender",
 ]
 
 AUTH_USER_MODEL = "users.User"
