@@ -25,9 +25,4 @@ urlpatterns = [
         "submit/",
         SubmitBorrowerApplicationView.as_view(),
         name="borrower-submit"
-    ),
-from django.urls import path
-
-urlpatterns = [
-    # Borrower endpoint routes
-]
+    ),]

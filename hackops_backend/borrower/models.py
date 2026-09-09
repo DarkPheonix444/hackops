@@ -135,6 +135,11 @@ class Borrower(models.Model):
         null=True
     )
 
+    cibil_score = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True
+    )
+
     # =====================================================
     # LOAN REQUIREMENT
     # =====================================================
