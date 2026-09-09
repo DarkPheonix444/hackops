@@ -1,10 +1,12 @@
 from django.test import TestCase
+from datetime import date
 from django.contrib.auth import get_user_model
 
 from borrower.models import Borrower, BorrowerDocument, BorrowerVerification
 from .services.extraction import extract_document_data
 from .services.identity_matching import (
 	apply_identity_name_check,
+	compare_identity_dobs,
 	compare_identity_names,
 )
 from .models import DocumentProcessing
@@ -45,8 +47,36 @@ class DocumentExtractionTests(TestCase):
 		self.assertEqual(result["fields"]["average_credit"], 1000.0)
 		self.assertEqual(len(result["fields"]["transaction_rows"]), 2)
 
+	def test_pan_dob_extraction(self):
+		result = extract_document_data(
+			"PAN",
+			"Name: Rahul Sharma\nPAN: ABCDE1234F\nDate of Birth: 15/08/1995",
+		)
+
+		self.assertEqual(result["fields"]["date_of_birth"], "15/08/1995")
+
 
 class IdentityNameMatchingTests(TestCase):
+	def test_matching_dobs_are_not_flagged(self):
+		result = compare_identity_dobs(
+			date(1995, 8, 15),
+			"15/08/1995",
+			"1995-08-15",
+		)
+
+		self.assertEqual(result["status"], "MATCH")
+		self.assertIsNone(result["flag"])
+
+	def test_mismatching_dobs_are_flagged(self):
+		result = compare_identity_dobs(
+			date(1995, 8, 15),
+			"16/08/1995",
+			"15/08/1995",
+		)
+
+		self.assertEqual(result["status"], "MISMATCH")
+		self.assertEqual(result["flag"]["type"], "OCR_DOB_MISMATCH")
+
 	def test_matching_names_are_not_flagged(self):
 		result = compare_identity_names(
 			"Rahul Sharma",

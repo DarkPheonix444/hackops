@@ -71,6 +71,7 @@ def extract_pan(text):
         "fields": {
             "name": _find_name(text, ["name", "नाम"]),
             "pan": pan_match.group(0) if pan_match else None,
+            "date_of_birth": _find_date(text, ["date of birth", "dob", "जन्म"]),
         },
     }
 
