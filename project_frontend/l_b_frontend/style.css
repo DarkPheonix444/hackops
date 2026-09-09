@@ -81,8 +81,7 @@ nav {
     gap: 32px;
 }
 
-nav a,
-.login-btn {
+nav a {
     color: var(--muted);
     text-decoration: none;
     font-size: 14px;
@@ -91,9 +90,32 @@ nav a,
     transition: 0.2s;
 }
 
-nav a:hover,
-.login-btn:hover {
+nav a:hover {
     color: var(--white);
+}
+
+.login-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 22px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.login-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: #36d6c2;
+    color: #ffffff !important;
+    transform: translateY(-1px);
 }
 
 .nav-buttons {

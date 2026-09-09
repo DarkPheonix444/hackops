@@ -55,6 +55,11 @@ export const borrowerService = {
     const response = await api.post('/borrower/submit/');
     return response.data;
   },
+
+  async requestReverification() {
+    const response = await api.post('/borrower/verification/reverify/');
+    return response.data;
+  },
 };
 
 export default borrowerService;

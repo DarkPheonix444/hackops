@@ -88,18 +88,27 @@
 }
 
 .tl-login-btn {
-  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-  padding: 8px 18px;
+  padding: 9px 22px;
   border-radius: 8px;
-  transition: 0.2s;
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .tl-login-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .tl-primary-btn {

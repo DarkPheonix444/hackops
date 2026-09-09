@@ -1,22 +1,4 @@
-import axios from 'axios';
-import config from '../config';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-const api = axios.create({
-  baseURL: config.baseURLApi,
-});
-
-api.interceptors.request.use((reqConfig) => {
-  const headers = getAuthHeaders();
-  if (headers.Authorization) {
-    reqConfig.headers.Authorization = headers.Authorization;
-  }
-  return reqConfig;
-});
+import api from './api';
 
 export const verificationService = {
   // Start or get active verification session
