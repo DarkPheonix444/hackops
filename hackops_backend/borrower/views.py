@@ -16,6 +16,12 @@ from .serializer import (
 from .verification import TrustLensVerificationEngine
 
 
+def _profile_response(borrower):
+    data = BorrowerSerializer(borrower).data
+    data["details_complete"] = borrower.details_complete
+    return data
+
+
 class BorrowerProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -29,10 +35,8 @@ class BorrowerProfileView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = BorrowerSerializer(borrower)
-
         return Response(
-            serializer.data,
+            _profile_response(borrower),
             status=status.HTTP_200_OK
         )
 
@@ -50,7 +54,7 @@ class BorrowerProfileView(APIView):
             borrower = serializer.save(user=request.user)
 
             return Response(
-                BorrowerSerializer(borrower).data,
+                _profile_response(borrower),
                 status=status.HTTP_201_CREATED
             )
 
@@ -94,7 +98,7 @@ class BorrowerProfileView(APIView):
             serializer.save()
 
             return Response(
-                serializer.data,
+                _profile_response(borrower),
                 status=status.HTTP_200_OK
             )
 
@@ -140,7 +144,10 @@ class BorrowerDocumentUploadView(APIView):
             )
 
         # Don't allow documents to be changed after submission
-        if borrower.application_status != Borrower.ApplicationStatus.DRAFT:
+        if borrower.application_status not in [
+            Borrower.ApplicationStatus.DRAFT,
+            Borrower.ApplicationStatus.REVERIFICATION,
+        ]:
             return Response(
                 {
                     "detail": (
@@ -184,7 +191,10 @@ class SubmitBorrowerApplicationView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        if borrower.application_status != Borrower.ApplicationStatus.DRAFT:
+        if borrower.application_status not in [
+            Borrower.ApplicationStatus.DRAFT,
+            Borrower.ApplicationStatus.REVERIFICATION,
+        ]:
             return Response(
                 {
                     "detail": "Application has already been submitted."
@@ -289,6 +299,51 @@ class VerificationStartView(APIView):
                 ],
             },
             status=status.HTTP_200_OK
+        )
+
+
+class VerificationReverificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            borrower = request.user.borrower_profile
+        except Borrower.DoesNotExist:
+            return Response(
+                {"detail": "Borrower profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        latest = borrower.verifications.first()
+        if not latest:
+            return Response(
+                {"detail": "No previous verification is available for reverification."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        borrower.application_status = Borrower.ApplicationStatus.REVERIFICATION
+        borrower.save(update_fields=["application_status", "updated_at"])
+
+        verification = BorrowerVerification.objects.create(
+            borrower=borrower,
+            identity_method=latest.identity_method,
+            verification_status=BorrowerVerification.VerificationStatus.PENDING,
+            explanation=["Reverification requested by borrower."],
+            provider="MOCK",
+            details={
+                "reverification_of": latest.id,
+                "requested_at": timezone.now().isoformat(),
+            },
+        )
+
+        return Response(
+            {
+                "message": "Reverification requested.",
+                "application_status": borrower.application_status,
+                "session": BorrowerVerificationSerializer(verification).data,
+                "details_complete": borrower.details_complete,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 

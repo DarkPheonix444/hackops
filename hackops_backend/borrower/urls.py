@@ -5,6 +5,7 @@ from .views import (
     BorrowerDocumentUploadView,
     SubmitBorrowerApplicationView,
     VerificationStartView,
+    VerificationReverificationView,
     VerificationSubmitView,
     VerificationStatusView,
     VerificationResultView,
@@ -23,6 +24,7 @@ urlpatterns = [
 
     # TrustLens Identity & Document Verification Module
     path("verification/start/", VerificationStartView.as_view(), name="verification-start"),
+    path("verification/reverify/", VerificationReverificationView.as_view(), name="verification-reverify"),
     path("verification/submit/", VerificationSubmitView.as_view(), name="verification-submit"),
     path("verification/status/", VerificationStatusView.as_view(), name="verification-status"),
     path("verification/result/", VerificationResultView.as_view(), name="verification-result"),

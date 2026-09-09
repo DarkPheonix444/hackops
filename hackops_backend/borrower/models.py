@@ -201,6 +201,36 @@ class Borrower(models.Model):
     def __str__(self):
         return f"{self.name} - {self.pan_number}"
 
+    @property
+    def details_complete(self):
+        required_fields = (
+            "name",
+            "name_as_per_aadhaar",
+            "name_as_per_pan",
+            "aadhaar_number",
+            "pan_number",
+            "date_of_birth",
+            "phone_number",
+            "address_line",
+            "city",
+            "state",
+            "pincode",
+            "employment_type",
+            "employer_or_business_name",
+            "monthly_income",
+            "annual_gross_income",
+            "existing_monthly_obligations",
+            "amount_requested",
+            "loan_purpose",
+            "loan_purpose_details",
+            "requested_tenure_months",
+            "repayment_frequency",
+        )
+        return all(
+            getattr(self, field_name) not in (None, "")
+            for field_name in required_fields
+        )
+
 
 class BorrowerDocument(models.Model):
 
