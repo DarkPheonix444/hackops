@@ -1,26 +1,499 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="React Material Admin Full" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="referrer" content="no-referrer-when-downgrade" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustLens — AI Lending Intelligence</title>
+
+    <link rel="stylesheet" href="/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-    />
-    <link rel="icon" href="%BASE_URL%favicon.png" sizes="16x16" type="image/png" />
-    <link rel="icon" href="%BASE_URL%favicon.png" sizes="32x32" type="image/png" />
-    <link rel="icon" href="%BASE_URL%favicon.png" sizes="48x48" type="image/png" />
-    <link rel="icon" href="%BASE_URL%favicon.png" sizes="62x62" type="image/png" />
-    <link rel="icon" href="%BASE_URL%favicon.png" sizes="80x80" type="image/png" />
-    <link rel="manifest" href="%BASE_URL%manifest.json" />
-    <title>React Material Admin Full</title>
-  </head>
-  <body style="font-family: 'Roboto', sans-serif">
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:300,400,500,700&display=swap"
+        rel="stylesheet"
+    >
+</head>
+
+<body>
+
+    <div id="landing-page">
+        <!-- NAVBAR -->
+        <header class="navbar">
+            <div class="logo">
+                <div class="logo-icon">T</div>
+                <span>TrustLens</span>
+            </div>
+
+            <nav>
+                <a href="#product">Product</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#intelligence">Intelligence</a>
+                <a href="#about">About</a>
+            </nav>
+
+            <div class="nav-buttons">
+                <a href="/login" class="login-btn">Login</a>
+                <a href="/login" class="primary-btn small">Get Started</a>
+            </div>
+        </header>
+
+
+        <!-- HERO -->
+        <main>
+
+            <section class="hero" id="product">
+
+                <div class="hero-content">
+
+                    <div class="badge">
+                        <span class="pulse"></span>
+                        AI-powered lending intelligence
+                    </div>
+
+                    <h1>
+                        Know who to
+                        <span>trust</span>
+                        before you lend.
+                    </h1>
+
+                    <p>
+                        TrustLens combines identity verification, financial
+                        intelligence, behavioral signals and fraud detection
+                        to help you make safer informal lending decisions.
+                    </p>
+
+                    <div class="hero-buttons">
+                        <a href="/login" class="primary-btn">
+                            Analyze a Borrower
+                            <span>→</span>
+                        </a>
+
+                        <a href="#how-it-works" class="secondary-btn">
+                            Explore Intelligence
+                        </a>
+                    </div>
+
+                    <div class="hero-stats">
+                        <div>
+                            <strong>10K+</strong>
+                            <span>Profiles Analyzed</span>
+                        </div>
+
+                        <div>
+                            <strong>94%</strong>
+                            <span>AI Confidence</span>
+                        </div>
+
+                        <div>
+                            <strong>24/7</strong>
+                            <span>Risk Monitoring</span>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- AI CARD -->
+                <div class="hero-dashboard">
+
+                    <div class="dashboard-header">
+                        <div>
+                            <small>Borrower Intelligence</small>
+                            <h3>Rahul Sharma</h3>
+                        </div>
+
+                        <div class="verified">
+                            ✓ Verified
+                        </div>
+                    </div>
+
+
+                    <div class="score-section">
+
+                        <div class="score-circle">
+                            <div>
+                                <strong>82</strong>
+                                <span>Trust Score</span>
+                            </div>
+                        </div>
+
+                        <div class="score-info">
+
+                            <div class="risk-label">
+                                <span>Risk Level</span>
+                                <strong>LOW</strong>
+                            </div>
+
+                            <div class="progress">
+                                <div class="progress-bar"></div>
+                            </div>
+
+                            <p>
+                                Strong financial stability and consistent
+                                repayment behavior.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mini-cards">
+
+                        <div class="mini-card">
+                            <span>Risk</span>
+                            <strong>28</strong>
+                            <small>Low</small>
+                        </div>
+
+                        <div class="mini-card">
+                            <span>Fraud</span>
+                            <strong>8%</strong>
+                            <small>Low</small>
+                        </div>
+
+                        <div class="mini-card">
+                            <span>Confidence</span>
+                            <strong>91%</strong>
+                            <small>High</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="recommendation">
+
+                        <div>
+                            <small>AI Recommendation</small>
+                            <h3>₹35,000</h3>
+                        </div>
+
+                        <div class="recommendation-right">
+                            <span>6 months</span>
+                            <strong>Recommended</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- TRUST STRIP -->
+            <section class="trust-strip">
+
+                <div>
+                    <span class="check">✓</span>
+                    Identity Verification
+                </div>
+
+                <div>
+                    <span class="check">✓</span>
+                    Financial Analysis
+                </div>
+
+                <div>
+                    <span class="check">✓</span>
+                    Fraud Detection
+                </div>
+
+                <div>
+                    <span class="check">✓</span>
+                    Explainable AI
+                </div>
+
+            </section>
+
+
+            <!-- HOW IT WORKS -->
+            <section class="section" id="how-it-works">
+
+                <div class="section-heading">
+
+                    <div class="section-tag">
+                        HOW IT WORKS
+                    </div>
+
+                    <h2>
+                        From borrower data to
+                        <span>better decisions.</span>
+                    </h2>
+
+                    <p>
+                        TrustLens turns scattered borrower information into
+                        clear, evidence-backed lending intelligence.
+                    </p>
+
+                </div>
+
+
+                <div class="steps">
+
+                    <div class="step-card">
+                        <div class="step-number">01</div>
+
+                        <div class="step-icon">✓</div>
+
+                        <h3>Verify</h3>
+
+                        <p>
+                            Verify identity and extract information from
+                            financial documents.
+                        </p>
+                    </div>
+
+
+                    <div class="step-card">
+                        <div class="step-number">02</div>
+
+                        <div class="step-icon">◈</div>
+
+                        <h3>Analyze</h3>
+
+                        <p>
+                            Analyze income, repayment history and behavioral
+                            patterns.
+                        </p>
+                    </div>
+
+
+                    <div class="step-card">
+                        <div class="step-number">03</div>
+
+                        <div class="step-icon">⌁</div>
+
+                        <h3>Detect</h3>
+
+                        <p>
+                            Detect fraud signals, inconsistencies and risky
+                            borrower relationships.
+                        </p>
+                    </div>
+
+
+                    <div class="step-card">
+                        <div class="step-number">04</div>
+
+                        <div class="step-icon">↗</div>
+
+                        <h3>Recommend</h3>
+
+                        <p>
+                            Generate personalized lending terms with clear
+                            explanations.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- INTELLIGENCE -->
+            <section class="intelligence-section" id="intelligence">
+
+                <div class="intelligence-text">
+
+                    <div class="section-tag">
+                        TRUST INTELLIGENCE
+                    </div>
+
+                    <h2>
+                        Don't just show a score.
+                        <span>Show why.</span>
+                    </h2>
+
+                    <p>
+                        Every TrustLens recommendation is backed by measurable
+                        factors and supporting evidence.
+                    </p>
+
+                    <div class="feature-list">
+
+                        <div>
+                            <span>✓</span>
+                            Financial stability analysis
+                        </div>
+
+                        <div>
+                            <span>✓</span>
+                            Repayment behavior
+                        </div>
+
+                        <div>
+                            <span>✓</span>
+                            Behavioral consistency
+                        </div>
+
+                        <div>
+                            <span>✓</span>
+                            Fraud & network intelligence
+                        </div>
+
+                    </div>
+
+                    <a href="#how-it-works" class="primary-btn">
+                        Explore Risk Intelligence →
+                    </a>
+
+                </div>
+
+
+                <div class="risk-card">
+
+                    <div class="risk-card-header">
+                        <div>
+                            <small>RISK BREAKDOWN</small>
+                            <h3>Why is the risk 28?</h3>
+                        </div>
+
+                        <span class="low-badge">LOW RISK</span>
+                    </div>
+
+
+                    <div class="risk-item">
+                        <div>
+                            <span>Income Stability</span>
+                            <strong>18%</strong>
+                        </div>
+
+                        <div class="risk-progress">
+                            <span style="width: 18%"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="risk-item">
+                        <div>
+                            <span>Debt Burden</span>
+                            <strong>12%</strong>
+                        </div>
+
+                        <div class="risk-progress">
+                            <span style="width: 12%"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="risk-item">
+                        <div>
+                            <span>Repayment History</span>
+                            <strong>8%</strong>
+                        </div>
+
+                        <div class="risk-progress">
+                            <span style="width: 8%"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="risk-item">
+                        <div>
+                            <span>Behavioral Risk</span>
+                            <strong>21%</strong>
+                        </div>
+
+                        <div class="risk-progress">
+                            <span style="width: 21%"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="evidence">
+
+                        <div class="evidence-title">
+                            <span>✓</span>
+                            Evidence
+                        </div>
+
+                        <p>8 months consistent income</p>
+                        <p>6/6 previous repayments on time</p>
+                        <p>No suspicious transactions detected</p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CTA -->
+            <section class="cta-section" id="about">
+
+                <div class="cta-content">
+
+                    <div class="section-tag">
+                        MAKE BETTER LENDING DECISIONS
+                    </div>
+
+                    <h2>
+                        Trust the data.
+                        <span>Understand the risk.</span>
+                    </h2>
+
+                    <p>
+                        Give lenders the intelligence they need to make
+                        safer, more transparent decisions.
+                    </p>
+
+                    <a href="/login" class="primary-btn">
+                        Start Analyzing →
+                    </a>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <!-- FOOTER -->
+        <footer>
+
+            <div class="logo">
+                <div class="logo-icon">T</div>
+                <span>TrustLens</span>
+            </div>
+
+            <p>
+                AI-powered trust & risk intelligence for informal lending.
+            </p>
+
+            <span class="copyright">
+                © 2026 TrustLens
+            </span>
+
+        </footer>
+    </div>
+
+    <!-- React App Root Container -->
     <div id="root"></div>
+
+    <script>
+      (function() {
+        function syncRoute() {
+          var isHome = window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '';
+          var landing = document.getElementById('landing-page');
+          var root = document.getElementById('root');
+          if (landing) landing.style.display = isHome ? 'block' : 'none';
+          if (root) root.style.display = isHome ? 'none' : 'block';
+        }
+        syncRoute();
+        window.addEventListener('popstate', syncRoute);
+        document.addEventListener('click', function(e) {
+          var target = e.target.closest('a');
+          if (target && target.getAttribute('href') && target.getAttribute('href').startsWith('/')) {
+            setTimeout(syncRoute, 50);
+          }
+        });
+      })();
+    </script>
+
+    <!-- Vite Module Entry Point for React Application -->
     <script type="module" src="/src/index.js"></script>
-  </body>
+
+</body>
 </html>

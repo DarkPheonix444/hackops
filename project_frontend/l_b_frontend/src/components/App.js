@@ -34,7 +34,7 @@ export default function App() {
         <BrowserRouter basename={routerBase}>
           <RouterNavigatorSync />
           <Routes>
-            <Route path='/' element={<Navigate to='/app/profile' replace />} />
+            <Route path='/' element={null} />
             <Route
               path='/app'
               element={<Navigate to='/app/dashboard' replace />}
