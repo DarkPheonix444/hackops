@@ -1,8 +1,11 @@
 from django.test import TestCase
 from datetime import date
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from rest_framework.test import APIClient
 
 from borrower.models import Borrower, BorrowerDocument, BorrowerVerification
+from lender.models import LenderProfile
 from .services.extraction import extract_document_data
 from .services.identity_matching import (
 	apply_identity_name_check,
@@ -136,3 +139,64 @@ class IdentityNameMatchingTests(TestCase):
 			"OCR_NAME_MAJOR_MISMATCH",
 			[flag["type"] for flag in verification.flags],
 		)
+
+
+class CompanyDashboardAPITests(TestCase):
+	def setUp(self):
+		self.client = APIClient()
+		self.borrower_user = User.objects.create_user(
+			email="borrower@example.com",
+			name="Rahul Sharma",
+			password="testpassword123",
+		)
+		self.borrower = Borrower.objects.create(
+			user=self.borrower_user,
+			name="Rahul Sharma",
+			aadhaar_number="234567890123",
+			pan_number="ABCDE1234F",
+			phone_number="9876543210",
+			application_status=Borrower.ApplicationStatus.FROZEN,
+		)
+		self.document = BorrowerDocument.objects.create(
+			borrower=self.borrower,
+			document_type=BorrowerDocument.DocumentType.PAN,
+			document=SimpleUploadedFile("pan.jpg", b"image-bytes"),
+		)
+		DocumentProcessing.objects.create(
+			document=self.document,
+			status=DocumentProcessing.Status.COMPLETED,
+			raw_ocr_text="Name: Rahul Sharma",
+		)
+		self.company_user = User.objects.create_user(
+			email="company@example.com",
+			name="Company User",
+			password="testpassword123",
+		)
+		LenderProfile.objects.create(user=self.company_user)
+
+	def test_borrower_cannot_access_company_dashboard(self):
+		self.client.force_authenticate(user=self.borrower_user)
+		response = self.client.get("/api/co/borrowers/")
+		self.assertEqual(response.status_code, 403)
+
+	def test_company_can_view_borrower_and_document_data(self):
+		self.client.force_authenticate(user=self.company_user)
+
+		list_response = self.client.get("/api/co/borrowers/")
+		self.assertEqual(list_response.status_code, 200)
+		self.assertEqual(list_response.data[0]["email"], "borrower@example.com")
+
+		detail_response = self.client.get(
+			f"/api/co/borrowers/{self.borrower.id}/"
+		)
+		self.assertEqual(detail_response.status_code, 200)
+		document_data = detail_response.data["documents"][0]
+		self.assertEqual(document_data["ocr_status"], "COMPLETED")
+		self.assertEqual(document_data["raw_ocr_text"], "Name: Rahul Sharma")
+		self.assertTrue(document_data["document_url"].endswith("/media/borrower_documents/pan.jpg"))
+
+		documents_response = self.client.get(
+			f"/api/co/borrowers/{self.borrower.id}/documents/"
+		)
+		self.assertEqual(documents_response.status_code, 200)
+		self.assertEqual(len(documents_response.data), 1)

@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import Q
 from borrower.models import Borrower, BorrowerDocument
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,11 +10,84 @@ from .models import DocumentProcessing
 from .permissions import CompanyOnlyPermission
 from .serializers import (
 	BorrowerDocumentIngestionSerializer,
+	CompanyBorrowerDetailSerializer,
+	CompanyBorrowerListSerializer,
+	CompanyDocumentSerializer,
 	DocumentProcessingSerializer,
 )
 from .services.document_processing import process_borrower_document
 
 logger = logging.getLogger(__name__)
+
+
+class CompanyBorrowerListView(APIView):
+	permission_classes = [CompanyOnlyPermission]
+
+	def get(self, request):
+		borrowers = Borrower.objects.exclude(
+			application_status=Borrower.ApplicationStatus.DRAFT
+		).select_related("user").order_by("-submitted_at", "-updated_at")
+
+		application_status = request.query_params.get("application_status")
+		if application_status:
+			borrowers = borrowers.filter(application_status=application_status)
+
+		search = request.query_params.get("search")
+		if search:
+			borrowers = borrowers.filter(
+				Q(name__icontains=search)
+				| Q(pan_number__icontains=search)
+				| Q(user__email__icontains=search)
+			)
+
+		serializer = CompanyBorrowerListSerializer(borrowers, many=True)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CompanyBorrowerDetailView(APIView):
+	permission_classes = [CompanyOnlyPermission]
+
+	def get(self, request, borrower_id):
+		try:
+			borrower = Borrower.objects.exclude(
+				application_status=Borrower.ApplicationStatus.DRAFT
+			).select_related("user").prefetch_related(
+				"documents__processing"
+			).get(pk=borrower_id)
+		except Borrower.DoesNotExist:
+			return Response(
+				{"detail": "Borrower not found."},
+				status=status.HTTP_404_NOT_FOUND,
+			)
+
+		serializer = CompanyBorrowerDetailSerializer(
+			borrower,
+			context={"request": request},
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CompanyBorrowerDocumentsView(APIView):
+	permission_classes = [CompanyOnlyPermission]
+
+	def get(self, request, borrower_id):
+		try:
+			borrower = Borrower.objects.exclude(
+				application_status=Borrower.ApplicationStatus.DRAFT
+			).get(pk=borrower_id)
+		except Borrower.DoesNotExist:
+			return Response(
+				{"detail": "Borrower not found."},
+				status=status.HTTP_404_NOT_FOUND,
+			)
+
+		documents = borrower.documents.all().prefetch_related("processing")
+		serializer = CompanyDocumentSerializer(
+			documents,
+			many=True,
+			context={"request": request},
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BorrowerDocumentListView(APIView):
