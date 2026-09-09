@@ -21,26 +21,22 @@ export default function Homepage() {
           <a href='#how-it-works'>How It Works</a>
           <a href='#intelligence'>Intelligence</a>
           <a href='#features'>Features</a>
-          <Link to='/loan-forms'>Loan Forms</Link>
         </nav>
 
         <div className='tl-nav-buttons'>
-          <Link to='/loan-forms' className='tl-secondary-btn' style={{ padding: '8px 16px', borderRadius: '999px', fontSize: '13px', textDecoration: 'none' }}>
-            Loan Forms
-          </Link>
           {isAuth ? (
-            <Link to='/app/dashboard' className='tl-primary-btn'>
-              Go to Dashboard ({currentUser?.name || 'My Account'}) →
-            </Link>
-          ) : (
             <>
-              <Link to='/login' className='tl-login-btn'>
+              <Link to='/login' className='tl-login-btn' style={{ marginRight: 12 }}>
                 Sign In
               </Link>
-              <Link to='/login?tab=1' className='tl-primary-btn'>
-                Get Started
+              <Link to='/app/dashboard' className='tl-primary-btn'>
+                Go to Dashboard →
               </Link>
             </>
+          ) : (
+            <Link to='/login' className='tl-login-btn'>
+              Sign In
+            </Link>
           )}
         </div>
       </header>
@@ -65,19 +61,13 @@ export default function Homepage() {
             </p>
 
             <div className='tl-hero-buttons'>
-              <Link to='/loan-forms' className='tl-secondary-btn' style={{ borderColor: '#36d6c2', color: '#36d6c2', textDecoration: 'none' }}>
-                📋 Fill Loan Forms
-              </Link>
-              <Link to='/verification' className='tl-secondary-btn' style={{ textDecoration: 'none' }}>
-                Verify Identity →
-              </Link>
               {isAuth ? (
                 <Link to='/app/dashboard' className='tl-primary-btn'>
-                  Enter Lending Dashboard <span>→</span>
+                  Enter Dashboard <span>→</span>
                 </Link>
               ) : (
                 <Link to='/login' className='tl-primary-btn'>
-                  Enter Dashboard <span>→</span>
+                  Get Started <span>→</span>
                 </Link>
               )}
             </div>
@@ -245,10 +235,16 @@ export default function Homepage() {
               Connect to the live marketplace now as a Lender to review loans, or as a
               Borrower to submit your application and upload required KYC documents.
             </p>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-              <Link to='/login' className='tl-primary-btn'>
-                Open Portal Login →
-              </Link>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {isAuth ? (
+                <Link to='/app/dashboard' className='tl-primary-btn'>
+                  Enter Dashboard →
+                </Link>
+              ) : (
+                <Link to='/login' className='tl-primary-btn'>
+                  Explore Platform →
+                </Link>
+              )}
             </div>
           </div>
         </section>

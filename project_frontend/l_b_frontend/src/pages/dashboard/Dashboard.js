@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   Box,
@@ -50,6 +51,7 @@ import borrowerService, { DOCUMENT_TYPES } from '../../services/borrowerService'
 import lenderService from '../../services/lenderService';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { currentUser, userRole } = useUserState();
   const userDispatch = useUserDispatch();
 
@@ -414,8 +416,27 @@ export default function Dashboard() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Box display='flex' justifyContent={{ xs: 'flex-start', md: 'flex-end' }} alignItems='center' gap={1.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box display='flex' justifyContent={{ xs: 'flex-start', md: 'flex-end' }} alignItems='center' gap={1.5} flexWrap='wrap'>
+              <Button
+                variant='contained'
+                onClick={() => navigate(activeTab === 'lender' ? '/app/loan-forms?role=lender' : '/app/loan-forms?role=borrower')}
+                startIcon={<DocumentIcon />}
+                style={{
+                  background:
+                    activeTab === 'lender'
+                      ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                      : 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                  color: '#ffffff',
+                }}
+              >
+                📋 Fill Loan Forms
+              </Button>
               <Tooltip title='Refresh live API data'>
                 <IconButton
                   onClick={() => {
@@ -586,15 +607,28 @@ export default function Dashboard() {
                 </Typography>
               </div>
 
-              <div>
+              <Box display='flex' gap={1.5} alignItems='center' flexWrap='wrap'>
+                <Button
+                  variant='contained'
+                  onClick={() => navigate('/app/loan-forms?role=borrower')}
+                  startIcon={<DocumentIcon />}
+                  style={{
+                    background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    borderRadius: 8,
+                  }}
+                >
+                  📋 Fill Borrower Application Form
+                </Button>
                 {borrowerNotFound ? (
                   <Button
-                    variant='contained'
+                    variant='outlined'
                     color='primary'
                     onClick={handleOpenCreateProfile}
-                    style={{ background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)', fontWeight: 700 }}
+                    style={{ borderColor: '#38bdf8', color: '#38bdf8', fontWeight: 700, textTransform: 'none', borderRadius: 8 }}
                   >
-                    Create Borrower Profile
+                    Quick Create Modal
                   </Button>
                 ) : (
                   borrowerProfile?.application_status === 'DRAFT' && (
@@ -602,13 +636,13 @@ export default function Dashboard() {
                       variant='outlined'
                       startIcon={<EditIcon />}
                       onClick={handleOpenEditProfile}
-                      style={{ borderColor: '#38bdf8', color: '#38bdf8', fontWeight: 600 }}
+                      style={{ borderColor: '#38bdf8', color: '#38bdf8', fontWeight: 600, textTransform: 'none', borderRadius: 8 }}
                     >
-                      Edit Profile
+                      Quick Edit
                     </Button>
                   )
                 )}
-              </div>
+              </Box>
             </Box>
 
             {borrowerLoading ? (
@@ -1037,14 +1071,29 @@ export default function Dashboard() {
                 </Typography>
               </div>
 
-              <Button
-                variant='outlined'
-                startIcon={<RefreshIcon />}
-                onClick={fetchLenderData}
-                style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#f8fafc' }}
-              >
-                Refresh Feed
-              </Button>
+              <Box display='flex' gap={1.5} alignItems='center' flexWrap='wrap'>
+                <Button
+                  variant='contained'
+                  onClick={() => navigate('/app/loan-forms?role=lender')}
+                  startIcon={<DocumentIcon />}
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    borderRadius: 8,
+                  }}
+                >
+                  📋 Update Lender Capital Form
+                </Button>
+                <Button
+                  variant='outlined'
+                  startIcon={<RefreshIcon />}
+                  onClick={fetchLenderData}
+                  style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#f8fafc', textTransform: 'none', borderRadius: 8 }}
+                >
+                  Refresh Feed
+                </Button>
+              </Box>
             </Box>
 
             {feedLoading ? (

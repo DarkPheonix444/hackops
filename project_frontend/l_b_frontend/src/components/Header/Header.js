@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box, Chip } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box, Chip, Button } from '@mui/material';
 import { useTheme } from '@mui/material';
 import {
   Menu as MenuIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
   ExitToApp as LogoutIcon,
+  Description as DocumentIcon,
 } from '@mui/icons-material';
 import classNames from 'classnames';
 
@@ -117,6 +118,25 @@ export default function Header() {
 
         <div className={classes.grow} />
 
+        <Button
+          onClick={() => navigate(userRole === 'lender' ? '/app/loan-forms?role=lender' : '/app/loan-forms?role=borrower')}
+          size='small'
+          variant='outlined'
+          startIcon={<DocumentIcon sx={{ fontSize: 16 }} />}
+          style={{
+            color: userRole === 'lender' ? '#10b981' : '#38bdf8',
+            borderColor: userRole === 'lender' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+            textTransform: 'none',
+            fontWeight: 700,
+            marginRight: 12,
+            borderRadius: 8,
+            fontSize: 12,
+            padding: '4px 10px',
+          }}
+        >
+          📋 Loan Forms
+        </Button>
+
         <Chip
           size='small'
           label={userRole === 'lender' ? 'Lender Portal' : 'Borrower Portal'}
@@ -187,6 +207,18 @@ export default function Header() {
             <AccountIcon className={classes.profileMenuIcon} />
             <Typography variant='body2' style={{ marginLeft: 8 }}>
               Dashboard
+            </Typography>
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setProfileMenu(null);
+              navigate(userRole === 'lender' ? '/app/loan-forms?role=lender' : '/app/loan-forms?role=borrower');
+            }}
+          >
+            <DocumentIcon className={classes.profileMenuIcon} />
+            <Typography variant='body2' style={{ marginLeft: 8 }}>
+              Fill Loan Forms
             </Typography>
           </MenuItem>
 

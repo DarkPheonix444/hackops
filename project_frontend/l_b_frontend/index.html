@@ -31,13 +31,10 @@
                 <a href="#how-it-works">How It Works</a>
                 <a href="#intelligence">Intelligence</a>
                 <a href="#about">About</a>
-                <a href="/loan-forms">Loan Forms</a>
             </nav>
 
             <div class="nav-buttons">
-                <a href="/loan-forms" class="secondary-btn small" style="border: 1px solid #36d6c2; color: #36d6c2; padding: 9px 18px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;">Loan Forms</a>
-                <a href="/login" class="login-btn">Login</a>
-                <a href="/verification" class="primary-btn small">Get Started</a>
+                <a href="/login" class="login-btn">Sign In</a>
             </div>
         </header>
 
@@ -67,17 +64,9 @@
                     </p>
 
                     <div class="hero-buttons">
-                        <a href="/verification" class="primary-btn">
-                            Analyze a Borrower
+                        <a href="/login" class="primary-btn">
+                            Get Started
                             <span>→</span>
-                        </a>
-
-                        <a href="/loan-forms" class="secondary-btn" style="border: 1px solid #36d6c2; color: #36d6c2;">
-                            📋 Fill Loan Forms
-                        </a>
-
-                        <a href="#how-it-works" class="secondary-btn">
-                            Explore Intelligence
                         </a>
                     </div>
 
@@ -445,12 +434,9 @@
                         safer, more transparent decisions.
                     </p>
 
-                    <div style="display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                        <a href="/verification" class="primary-btn">
-                            Start Analyzing →
-                        </a>
-                        <a href="/loan-forms" class="secondary-btn" style="border: 1px solid #36d6c2; color: #36d6c2;">
-                            📋 Fill Loan Forms
+                    <div style="display: flex; justify-content: center; align-items: center;">
+                        <a href="/login" class="primary-btn">
+                            Explore Platform →
                         </a>
                     </div>
 
@@ -491,6 +477,27 @@
           var root = document.getElementById('root');
           if (landing) landing.style.display = isHome ? 'block' : 'none';
           if (root) root.style.display = isHome ? 'none' : 'block';
+
+          if (isHome) {
+            var token = localStorage.getItem('token');
+            var userJson = localStorage.getItem('user');
+            var user = null;
+            try { user = JSON.parse(userJson); } catch (e) {}
+            var navButtons = document.querySelector('.nav-buttons');
+            var heroButtons = document.querySelector('.hero-buttons');
+            var ctaContainer = document.querySelector('.cta-content div');
+            if (token) {
+              if (navButtons) {
+                navButtons.innerHTML = '<a href="/login" class="login-btn" style="margin-right: 14px;">Sign In</a><a href="/app/dashboard" class="primary-btn small">Go to Dashboard →</a>';
+              }
+              if (heroButtons) {
+                heroButtons.innerHTML = '<a href="/app/dashboard" class="primary-btn">Enter Dashboard <span>→</span></a>';
+              }
+              if (ctaContainer) {
+                ctaContainer.innerHTML = '<a href="/app/dashboard" class="primary-btn">Enter Dashboard →</a>';
+              }
+            }
+          }
         }
         syncRoute();
         window.addEventListener('popstate', syncRoute);
