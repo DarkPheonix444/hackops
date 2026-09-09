@@ -24,8 +24,8 @@ import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
 import Dot from './components/Dot';
 
 const structure = [
-  { id: 100, label: 'Profile', link: '/app/profile', icon: <ProfileIcon /> },
-  { id: 0, label: 'Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
+  { id: 0, label: 'Lending Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
+  { id: 100, label: 'TrustLens Home', link: '/', icon: <ProfileIcon /> },
   {
     id: 1,
     label: 'E-commerce',

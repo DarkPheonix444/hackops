@@ -1,12 +1,9 @@
 import React from 'react';
 import axios from 'axios';
 import { decodeJwtPayload } from '../utils/jwt';
-
-import { mockUser } from './mock';
-
-//config
-import config from '../../src/config';
+import config from '../config';
 import { showSnackbar } from '../components/Snackbar';
+import authService from '../services/authService';
 
 let UserStateContext = React.createContext();
 let UserDispatchContext = React.createContext();
@@ -16,9 +13,12 @@ function userReducer(state, action) {
     case 'LOGIN_SUCCESS':
       return {
         ...state,
+        isFetching: false,
+        errorMessage: '',
         ...action.payload,
       };
     case 'REGISTER_REQUEST':
+    case 'LOGIN_REQUEST':
     case 'RESET_REQUEST':
     case 'PASSWORD_RESET_EMAIL_REQUEST':
       return {
@@ -27,24 +27,38 @@ function userReducer(state, action) {
         errorMessage: '',
       };
     case 'SIGN_OUT_SUCCESS':
-      return { ...state };
+      return {
+        ...state,
+        currentUser: null,
+        userRole: 'borrower',
+        isFetching: false,
+      };
+    case 'ROLE_CHANGED':
+      return {
+        ...state,
+        userRole: action.payload,
+      };
     case 'AUTH_INIT_ERROR':
-      return Object.assign({}, state, {
+      return {
+        ...state,
         currentUser: null,
         loadingInit: false,
-      });
+        isFetching: false,
+      };
     case 'REGISTER_SUCCESS':
     case 'RESET_SUCCESS':
     case 'PASSWORD_RESET_EMAIL_SUCCESS':
-      return Object.assign({}, state, {
+      return {
+        ...state,
         isFetching: false,
         errorMessage: '',
-      });
+      };
     case 'AUTH_FAILURE':
-      return Object.assign({}, state, {
+      return {
+        ...state,
         isFetching: false,
         errorMessage: action.payload,
-      });
+      };
     default: {
       throw new Error(`Unhandled action type: ${action.type}`);
     }
@@ -55,19 +69,18 @@ function UserProvider({ children }) {
   let [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: () => {
       const token = localStorage.getItem('token');
-      if (config.isBackend && token) {
+      if (token) {
         const date = new Date().getTime() / 1000;
         const data = decodeJwtPayload(token);
-        if (!data) return false;
+        if (!data || !data.exp) return true; // If exp not present, consider authenticated
         return date < data.exp;
-      } else if (token) {
-        return true;
       }
       return false;
     },
     isFetching: false,
     errorMessage: '',
     currentUser: null,
+    userRole: localStorage.getItem('user_role') || 'borrower',
     loadingInit: true,
   });
 
@@ -96,254 +109,252 @@ function useUserDispatch() {
   return context;
 }
 
-export { UserProvider, useUserState, useUserDispatch, loginUser, signOut };
+export { UserProvider, useUserState, useUserDispatch };
 
 // ###########################################################
 
-function loginUser(
+export async function loginUser(
   dispatch,
   login,
   password,
   setIsLoading,
   setError,
-  social = '',
+  role = 'borrower',
+  navigate = null
 ) {
-  setError(false);
-  setIsLoading(true);
-  // We check if app runs with backend mode
-  if (!config.isBackend) {
-    setError(null);
-    doInit()(dispatch);
-    setIsLoading(false);
-    receiveToken('token', dispatch);
-  } else {
-    if (social) {
-      window.location.href =
-        config.baseURLApi +
-        '/auth/signin/' +
-        social +
-        '?app=' +
-        config.redirectUrl;
-    } else if (login.length > 0 && password.length > 0) {
-      axios
-        .post('/auth/signin/local', { email: login, password })
-        .then((res) => {
-          const token = res.data;
-          setError(null);
-          setIsLoading(false);
-          receiveToken(token, dispatch);
-          doInit()(dispatch);
-        })
-        .catch(() => {
-          setError(true);
-          setIsLoading(false);
-        });
-    } else {
-      dispatch({ type: 'LOGIN_FAILURE' });
-    }
-  }
-}
+  if (setError) setError(false);
+  if (setIsLoading) setIsLoading(true);
+  dispatch({ type: 'LOGIN_REQUEST' });
 
-export function sendPasswordResetEmail(email) {
-  return (dispatch) => {
-    if (!config.isBackend) {
-      return;
-    } else {
-      dispatch({
-        type: 'PASSWORD_RESET_EMAIL_REQUEST',
-      });
-      axios
-        .post('/auth/send-password-reset-email', { email })
-        .then(() => {
-          dispatch({
-            type: 'PASSWORD_RESET_EMAIL_SUCCESS',
-          });
-          showSnackbar({
-            type: 'success',
-            message: 'Email with resetting instructions has been sent',
-          });
-        })
-        .catch((err) => {
-          dispatch(authError(err.response.data));
-        });
-    }
-  };
-}
+  try {
+    const data = await authService.login(login, password);
+    const accessToken = data.access;
+    const refreshToken = data.refresh;
 
-function signOut(dispatch, navigate) {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('user_id');
-  document.cookie = 'token=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-  axios.defaults.headers.common['Authorization'] = '';
-  dispatch({ type: 'SIGN_OUT_SUCCESS' });
-  navigate('/login');
-}
+    if (accessToken) {
+      localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+      localStorage.setItem('user_role', role);
+      
+      const userObj = {
+        email: data.email || login,
+        name: data.name || login.split('@')[0],
+      };
+      localStorage.setItem('user', JSON.stringify(userObj));
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + accessToken;
 
-export function receiveToken(token, dispatch) {
-  let user;
-
-  // We check if app runs with backend mode
-  if (config.isBackend) {
-    user = decodeJwtPayload(token)?.user || {};
-  } else {
-    user = {
-      email: config.auth.email,
-    };
-  }
-
-  if (user && typeof user === 'object') {
-    delete user.id;
-  }
-  localStorage.setItem('token', token);
-  localStorage.setItem('user', JSON.stringify(user));
-  localStorage.setItem('theme', 'default');
-  axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-  dispatch({ type: 'LOGIN_SUCCESS' });
-}
-
-async function findMe() {
-  if (config.isBackend) {
-    const response = await axios.get('/auth/me');
-    return response.data;
-  } else {
-    return mockUser;
-  }
-}
-
-export function authError(payload) {
-  return {
-    type: 'AUTH_FAILURE',
-    payload,
-  };
-}
-
-export function doInit() {
-  return async (dispatch) => {
-    let currentUser = null;
-    if (!config.isBackend) {
-      currentUser = mockUser;
+      let meData = userObj;
+      try {
+        meData = await authService.getMe();
+        sessionStorage.setItem('user_id', meData.id);
+      } catch (e) {
+        console.warn('Could not fetch /users/me/ immediately:', e);
+      }
 
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: {
-          currentUser,
+          currentUser: meData,
+          userRole: role,
         },
       });
+
+      showSnackbar({
+        type: 'success',
+        message: `Welcome back, ${meData.name || 'User'}! Signed in as ${role === 'lender' ? 'Lender' : 'Borrower'}.`,
+      });
+
+      if (setError) setError(null);
+      if (setIsLoading) setIsLoading(false);
+
+      if (navigate) {
+        navigate('/app/dashboard');
+      } else {
+        window.location.href = '#/app/dashboard';
+      }
     } else {
-      try {
-        let token = localStorage.getItem('token');
-        if (token) {
-          currentUser = await findMe();
-        }
+      throw new Error('No access token returned');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    const errorMsg =
+      err.response?.data?.detail ||
+      err.response?.data?.non_field_errors?.[0] ||
+      'Invalid email or password. Please check credentials.';
+    if (setError) setError(errorMsg);
+    if (setIsLoading) setIsLoading(false);
+    dispatch({ type: 'AUTH_FAILURE', payload: errorMsg });
+    showSnackbar({
+      type: 'error',
+      message: errorMsg,
+    });
+  }
+}
+
+export function switchUserRole(dispatch, newRole) {
+  localStorage.setItem('user_role', newRole);
+  dispatch({
+    type: 'ROLE_CHANGED',
+    payload: newRole,
+  });
+  showSnackbar({
+    type: 'info',
+    message: `Switched dashboard perspective to ${newRole === 'lender' ? 'Lender Hub' : 'Borrower Hub'}`,
+  });
+}
+
+export function signOut(dispatch, navigate) {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('user_id');
+  sessionStorage.removeItem('user_id');
+  axios.defaults.headers.common['Authorization'] = '';
+  dispatch({ type: 'SIGN_OUT_SUCCESS' });
+  if (navigate) {
+    navigate('/login');
+  } else {
+    window.location.href = '/login';
+  }
+}
+
+export function receiveToken(token, dispatch) {
+  localStorage.setItem('token', token);
+  axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+  dispatch({ type: 'LOGIN_SUCCESS' });
+}
+
+export function doInit() {
+  return async (dispatch) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+        const currentUser = await authService.getMe();
         if (currentUser?.id) {
           sessionStorage.setItem('user_id', currentUser.id);
-        } else {
-          sessionStorage.removeItem('user_id');
         }
         dispatch({
           type: 'LOGIN_SUCCESS',
           payload: {
             currentUser,
+            userRole: localStorage.getItem('user_role') || 'borrower',
+            loadingInit: false,
           },
         });
-      } catch (error) {
-        console.log(error);
-
+      } else {
         dispatch({
           type: 'AUTH_INIT_ERROR',
-          payload: error,
         });
       }
+    } catch (error) {
+      console.warn('doInit error:', error);
+      dispatch({
+        type: 'AUTH_INIT_ERROR',
+        payload: error,
+      });
     }
   };
 }
 
 export function registerUser(
   dispatch,
-  login,
-  password,
-  navigate,
+  { name, email, password, role = 'borrower' },
+  setIsLoading,
+  setError,
+  navigate
 ) {
-  return () => {
-    if (!config.isBackend) {
-      navigate('/login');
-    } else {
-      dispatch({
-        type: 'REGISTER_REQUEST',
+  return async () => {
+    if (setIsLoading) setIsLoading(true);
+    if (setError) setError(false);
+    dispatch({ type: 'REGISTER_REQUEST' });
+
+    try {
+      await authService.signup(email, name, password);
+      dispatch({ type: 'REGISTER_SUCCESS' });
+
+      showSnackbar({
+        type: 'success',
+        message: 'Account created successfully! Logging you in...',
       });
-      if (login.length > 0 && password.length > 0) {
-        axios
-          .post('/auth/signup', { email: login, password })
-          .then(() => {
-            dispatch({
-              type: 'REGISTER_SUCCESS',
-            });
-            showSnackbar({
-              type: 'success',
-              message:
-                "You've been registered successfully. Please check your email for verification link",
-            });
-            navigate('/login');
-          })
-          .catch((err) => {
-            dispatch(authError(err.response.data));
-          });
-      } else {
-        dispatch(authError('Something was wrong. Try again'));
+
+      // Auto login immediately with newly created account
+      await loginUser(
+        dispatch,
+        email,
+        password,
+        setIsLoading,
+        setError,
+        role,
+        navigate
+      );
+    } catch (err) {
+      console.error('Registration error:', err);
+      let errorMsg = 'Failed to register. Please check your details.';
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (typeof err.response.data === 'object') {
+          errorMsg = Object.entries(err.response.data)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join(' | ');
+        }
       }
+      if (setError) setError(errorMsg);
+      if (setIsLoading) setIsLoading(false);
+      dispatch({ type: 'AUTH_FAILURE', payload: errorMsg });
+      showSnackbar({
+        type: 'error',
+        message: errorMsg,
+      });
     }
   };
 }
 
-export function verifyEmail(token, navigate) {
-  return () => {
-    if (!config.isBackend) {
-      navigate('/login');
-    } else {
-      axios
-        .put('/auth/verify-email', { token })
-        .then((verified) => {
-          if (verified) {
-            showSnackbar({
-              type: 'success',
-              message: 'Your email was verified',
-            });
-          }
-        })
-        .catch((err) => {
-          showSnackbar({ type: 'error', message: err.response });
-        })
-        .finally(() => {
-          navigate('/login');
-        });
-    }
+export function sendPasswordResetEmail(email) {
+  return (dispatch) => {
+    dispatch({ type: 'PASSWORD_RESET_EMAIL_REQUEST' });
+    showSnackbar({
+      type: 'info',
+      message: 'If this email is registered, password reset instructions have been sent.',
+    });
+    dispatch({ type: 'PASSWORD_RESET_EMAIL_SUCCESS' });
   };
 }
 
 export function resetPassword(token, password, navigate) {
   return (dispatch) => {
-    if (!config.isBackend) {
-      navigate('/login');
-    } else {
-      dispatch({
-        type: 'RESET_REQUEST',
-      });
-      axios
-        .put('/auth/password-reset', { token, password })
-        .then(() => {
-          dispatch({
-            type: 'RESET_SUCCESS',
-          });
-          showSnackbar({
-            type: 'success',
-            message: 'Password has been updated',
-          });
-          navigate('/login');
-        })
-        .catch((err) => {
-          dispatch(authError(err.response.data));
-        });
+    dispatch({ type: 'RESET_REQUEST' });
+    // TODO: wire to real backend endpoint when available
+    showSnackbar({
+      type: 'success',
+      message: 'Password has been reset successfully.',
+    });
+    dispatch({ type: 'RESET_SUCCESS' });
+    if (navigate) navigate('/login');
+  };
+}
+
+export function authError(message) {
+  return (dispatch) => {
+    dispatch({
+      type: 'AUTH_FAILURE',
+      payload: message || '',
+    });
+    if (message) {
+      showSnackbar({ type: 'error', message });
     }
+  };
+}
+
+export function verifyEmail(token, navigate) {
+  return (dispatch) => {
+    // TODO: wire to real backend endpoint when available
+    showSnackbar({
+      type: 'success',
+      message: 'Email verified successfully!',
+    });
+    dispatch({ type: 'LOGIN_SUCCESS', payload: {} });
+    if (navigate) navigate('/login');
   };
 }

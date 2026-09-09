@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box, Chip } from '@mui/material';
 import { useTheme } from '@mui/material';
 import {
   Menu as MenuIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
+  ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
 import classNames from 'classnames';
 
-//images
+// images
 import profile from '../../images/main-profile.png';
 import config from '../../config';
 
@@ -25,13 +26,7 @@ import {
   useLayoutDispatch,
   toggleSidebar,
 } from '../../context/LayoutContext';
-import {
-  useManagementDispatch,
-  useManagementState,
-} from '../../context/ManagementContext';
-
-import { actions } from '../../context/ManagementContext';
-import { useUserDispatch, signOut } from '../../context/UserContext';
+import { useUserState, useUserDispatch, signOut } from '../../context/UserContext';
 
 export default function Header() {
   let classes = useStyles();
@@ -42,24 +37,11 @@ export default function Header() {
   let layoutState = useLayoutState();
   let layoutDispatch = useLayoutDispatch();
   let userDispatch = useUserDispatch();
-  const managementDispatch = useManagementDispatch();
+  const { currentUser, userRole } = useUserState();
 
   // local
   const [profileMenu, setProfileMenu] = useState(null);
-  const [currentUser, setCurrentUser] = useState();
   const [isSmall, setSmall] = useState(false);
-
-  const managementValue = useManagementState();
-
-  useEffect(() => {
-    actions.doFind(sessionStorage.getItem('user_id'))(managementDispatch);
-  }, []);
-
-  useEffect(() => {
-    if (config.isBackend) {
-      setCurrentUser(managementValue.currentUser);
-    }
-  }, [managementValue]);
 
   useEffect(function () {
     window.addEventListener('resize', handleWindowWidthChange);
@@ -76,8 +58,10 @@ export default function Header() {
     setSmall(isSmallScreen);
   }
 
+  const displayName = currentUser?.name || currentUser?.email?.split('@')[0] || 'User';
+
   return (
-    <AppBar position='fixed' className={classes.appBar}>
+    <AppBar position='fixed' className={classes.appBar} style={{ background: '#0b1728' }}>
       <Toolbar className={classes.toolbar}>
         <IconButton
           color='inherit'
@@ -108,10 +92,43 @@ export default function Header() {
             />
           )}
         </IconButton>
-        <Typography variant='h6' weight='medium' className={classes.logotype}>
-          React Material Admin Full
-        </Typography>
+
+        <Box display='flex' alignItems='center' gap={1.5}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: 16,
+            }}
+          >
+            T
+          </div>
+          <Typography variant='h6' weight='medium' className={classes.logotype} style={{ color: '#fff' }}>
+            TrustLens
+          </Typography>
+        </Box>
+
         <div className={classes.grow} />
+
+        <Chip
+          size='small'
+          label={userRole === 'lender' ? 'Lender Portal' : 'Borrower Portal'}
+          style={{
+            marginRight: 14,
+            background: userRole === 'lender' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+            color: userRole === 'lender' ? '#10b981' : '#38bdf8',
+            fontWeight: 700,
+            border: `1px solid ${userRole === 'lender' ? '#10b981' : '#38bdf8'}40`,
+          }}
+        />
+
         <IconButton
           aria-haspopup='true'
           color='inherit'
@@ -120,26 +137,24 @@ export default function Header() {
           onClick={(e) => setProfileMenu(e.currentTarget)}
         >
           <Avatar
-            alt={currentUser?.firstName}
-             
-            src={
-              (currentUser?.avatar?.length >= 1 &&
-              currentUser?.avatar[currentUser.avatar.length - 1].publicUrl) || profile
-            }
+            alt={displayName}
             classes={{ root: classes.headerIcon }}
+            style={{ background: '#0284c7', color: '#fff', fontWeight: 700 }}
           >
-            {currentUser?.firstName?.[0]}
+            {displayName[0]?.toUpperCase() || 'U'}
           </Avatar>
         </IconButton>
+
         <Typography
           block
           style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}
         >
           <div className={classes.profileLabel}>Hi,&nbsp;</div>
           <Typography weight={'bold'} className={classes.profileLabel}>
-            {currentUser?.firstName}
+            {displayName}
           </Typography>
         </Typography>
+
         <Menu
           id='profile-menu'
           open={Boolean(profileMenu)}
@@ -149,39 +164,53 @@ export default function Header() {
           classes={{ paper: classes.profileMenu }}
           disableAutoFocusItem
         >
-          <div className={classes.profileMenuUser}>
-            <Typography variant='h4' weight='medium'>
-              {currentUser?.firstName}
+          <div className={classes.profileMenuUser} style={{ padding: '16px 20px', minWidth: 200 }}>
+            <Typography variant='h5' weight='bold' style={{ color: '#1e293b' }}>
+              {displayName}
             </Typography>
-            <Typography
-              className={classes.profileMenuLink}
-              component='a'
-              color='primary'
-              href='https://flatlogic.com'
-            >
-              Flatlogic.com
+            <Typography variant='caption' style={{ color: '#64748b', display: 'block' }}>
+              {currentUser?.email || 'Logged In'}
             </Typography>
+            <Chip
+              size='small'
+              label={userRole === 'lender' ? 'Role: Lender' : 'Role: Borrower'}
+              style={{ marginTop: 8, fontSize: 11 }}
+            />
           </div>
+
           <MenuItem
-            className={classNames(
-              classes.profileMenuItem,
-              classes.headerMenuItem,
-            )}
+            onClick={() => {
+              setProfileMenu(null);
+              navigate('/app/dashboard');
+            }}
           >
             <AccountIcon className={classes.profileMenuIcon} />
-            <Link to='/app/user/edit' style={{ textDecoration: 'none' }}>
-              Profile
-            </Link>
-          </MenuItem>
-          <div className={classes.profileMenuUser}>
-            <Typography
-              className={classes.profileMenuLink}
-              color='primary'
-              onClick={() => signOut(userDispatch, navigate)}
-            >
-              Sign Out
+            <Typography variant='body2' style={{ marginLeft: 8 }}>
+              Dashboard
             </Typography>
-          </div>
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setProfileMenu(null);
+              navigate('/');
+            }}
+          >
+            <Typography variant='body2' style={{ marginLeft: 8, color: '#0284c7' }}>
+              TrustLens Home
+            </Typography>
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setProfileMenu(null);
+              signOut(userDispatch, navigate);
+            }}
+            style={{ borderTop: '1px solid #f1f5f9', color: '#dc2626' }}
+          >
+            <LogoutIcon style={{ fontSize: 18, color: '#dc2626', marginRight: 8 }} />
+            Sign Out
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
