@@ -1,38 +1,49 @@
 const isDevelopment = import.meta.env.DEV;
-const hostApi = isDevelopment
-  ? "http://localhost"
-  : "https://sing-generator-node.flatlogic.com";
-const portApi = isDevelopment ? 8080 : "";
-const baseURLApi = `${hostApi}${portApi ? `:${portApi}` : ``}/api`;
+const backendUrlEnv = import.meta.env.VITE_BACKEND_URL;
+const portApi = import.meta.env.VITE_API_PORT || (isDevelopment ? '8000' : '');
+const hostApi = backendUrlEnv
+  ? backendUrlEnv.replace(/\/api\/?$/, '')
+  : isDevelopment
+    ? 'http://127.0.0.1'
+    : 'http://localhost';
+const baseURLApi = backendUrlEnv
+  ? backendUrlEnv.endsWith('/api')
+    ? backendUrlEnv
+    : `${backendUrlEnv}/api`
+  : `${hostApi}${portApi ? `:${portApi}` : ''}/api`;
 const redirectUrl = isDevelopment
-  ? "http://localhost:3000"
-  : typeof window !== "undefined"
+  ? 'http://localhost:3000'
+  : typeof window !== 'undefined'
     ? window.location.origin
-    : "https://flatlogic.github.io/react-material-admin-full";
-const isBackend = String(import.meta.env.VITE_BACKEND).toLowerCase() === "true";
+    : 'http://localhost:3000';
+
+const isBackend =
+  import.meta.env.VITE_BACKEND !== undefined
+    ? String(import.meta.env.VITE_BACKEND).toLowerCase() === 'true'
+    : true; // Default to true so it connects to real Django backend
 
 const appConfig = {
   hostApi,
   portApi,
   baseURLApi,
   redirectUrl,
-  remote: "https://sing-generator-node.flatlogic.com",
   isBackend,
+  appName: 'TrustLens',
   auth: {
-    email: 'admin@flatlogic.com',
-    password: 'password',
+    email: 'admin@trustlens.ai',
+    password: 'password123',
   },
   app: {
     colors: {
-      dark: '#002B49',
+      dark: '#0f172a',
       light: '#FFFFFF',
-      sea: '#004472',
-      sky: '#E9EBEF',
-      wave: '#D1E7F6',
-      rain: '#CCDDE9',
-      middle: '#D7DFE6',
-      black: '#13191D',
-      salat: '#21AE8C',
+      sea: '#0284c7',
+      sky: '#e0f2fe',
+      wave: '#38bdf8',
+      rain: '#94a3b8',
+      middle: '#cbd5e1',
+      black: '#020617',
+      salat: '#10b981',
     },
   },
 };

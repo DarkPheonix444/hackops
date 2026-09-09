@@ -31,6 +31,7 @@ class LenderProfileSerializer(serializers.ModelSerializer):
 class VerifiedLoanApplicationSerializer(serializers.ModelSerializer):
     borrower = LenderUserSerializer(read_only=True)
     lender = LenderUserSerializer(read_only=True)
+    verification = serializers.SerializerMethodField()
 
     class Meta:
         model = LoanApplication
@@ -41,6 +42,7 @@ class VerifiedLoanApplicationSerializer(serializers.ModelSerializer):
             'amount_requested',
             'purpose',
             'status',
+            'verification',
             'ai_trust_score',
             'ai_risk_level',
             'ai_recommended_terms',
@@ -50,6 +52,28 @@ class VerifiedLoanApplicationSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def get_verification(self, obj):
+        try:
+            borrower_profile = getattr(obj.borrower, 'borrower_profile', None)
+            if borrower_profile:
+                verif = borrower_profile.verifications.first()
+                if verif:
+                    return {
+                        "status": verif.verification_status,
+                        "confidence": verif.confidence_score,
+                        "identity_match": verif.identity_match,
+                        "document_status": verif.document_status,
+                        "consistency_status": verif.consistency_status,
+                        "provider": verif.provider,
+                        "masked_aadhaar": verif.masked_aadhaar,
+                        "masked_pan": verif.masked_pan,
+                        "explanation": verif.explanation,
+                        "flags": verif.flags,
+                    }
+        except Exception:
+            pass
+        return None
 
 
 class LenderDecisionSerializer(serializers.Serializer):

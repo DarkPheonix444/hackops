@@ -17,6 +17,8 @@ import Error from '../pages/error';
 import Login from '../pages/login';
 import Verify from '../pages/verify';
 import Reset from '../pages/reset';
+import Homepage from '../pages/homepage/Homepage';
+import VerificationPage from '../pages/verification/VerificationPage';
 
 // context
 import { useUserState } from '../context/UserContext';
@@ -34,7 +36,7 @@ export default function App() {
         <BrowserRouter basename={routerBase}>
           <RouterNavigatorSync />
           <Routes>
-            <Route path='/' element={null} />
+            <Route path='/' element={<Homepage />} />
             <Route
               path='/app'
               element={<Navigate to='/app/dashboard' replace />}
@@ -74,6 +76,8 @@ export default function App() {
                 </PublicRoute>
               }
             />
+            <Route path='/verification' element={<VerificationPage />} />
+            <Route path='/app/verification' element={<VerificationPage />} />
             <Route path='*' element={<Error />} />
           </Routes>
         </BrowserRouter>
@@ -93,7 +97,7 @@ export default function App() {
 
   function PublicRoute({ children }) {
     if (isAuth) {
-      return <Navigate to='/' replace />;
+      return <Navigate to='/app/dashboard' replace />;
     }
 
     return children;

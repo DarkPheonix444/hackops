@@ -15,7 +15,8 @@ import {
   FolderOpen as FolderIcon,
   Description as DocumentationIcon,
   Person as PersonIcon,
-  AccountCircle as ProfileIcon
+  AccountCircle as ProfileIcon,
+  VerifiedUser as VerifiedUserIcon,
 } from '@mui/icons-material';
 import ChatIcon from '@mui/icons-material/Chat';
 import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
@@ -24,8 +25,22 @@ import ViewCompactRoundedIcon from '@mui/icons-material/ViewCompactRounded';
 import Dot from './components/Dot';
 
 const structure = [
+  {
+    id: 0,
+    label: 'Lending Dashboard',
+    link: '/app/dashboard',
+    icon: <HomeIcon />,
+  },
+  { id: 100, label: 'TrustLens Home', link: '/', icon: <ProfileIcon /> },
   { id: 100, label: 'Profile', link: '/app/profile', icon: <ProfileIcon /> },
-  { id: 0, label: 'Dashboard', link: '/app/dashboard', icon: <HomeIcon /> },
+  {
+    id: 99,
+    label: 'Identity Verification',
+    link: '/app/verification',
+    icon: <VerifiedUserIcon />,
+    badge: 'Demo',
+    badgeColor: 'secondary',
+  },
   {
     id: 1,
     label: 'E-commerce',
@@ -104,9 +119,7 @@ const structure = [
     link: '/app/tables',
     icon: <TableIcon />,
     children: [
-      {   label: 'Tables Basic',
-        link: '/app/tables/static'
-      },
+      { label: 'Tables Basic', link: '/app/tables/static' },
       {
         label: 'Tables Dynamic',
         link: '/app/tables/dynamic',
@@ -184,14 +197,14 @@ const structure = [
       { label: 'Invoice', link: '/app/extra/invoice' },
       {
         label: 'Login Page',
-        click: function(...rest) {
-          const name = 'onLogin'
-          rest.forEach(c => {
+        click: function (...rest) {
+          const name = 'onLogin';
+          rest.forEach((c) => {
             if (c.clickName === name) {
-              return c()
+              return c();
             }
-            return false
-          })
+            return false;
+          });
         },
       },
       { label: 'Error Page', link: '/404' },
@@ -225,42 +238,60 @@ const structure = [
   },
   { id: 14, type: 'divider' },
   { id: 15, type: 'title', label: 'HELP' },
-  { id: 16, label: 'Library', link: 'https://flatlogic.com/templates/', icon: <LibraryIcon />, ext: true },
-  { id: 17, label: 'Support', link: 'https://flatlogic.com/forum/', icon: <SupportIcon />, ext: true },
-  { id: 18, label: 'FAQ', link: 'https://flatlogic.com/forum/', icon: <FAQIcon />, ext: true },
+  {
+    id: 16,
+    label: 'Library',
+    link: 'https://flatlogic.com/templates/',
+    icon: <LibraryIcon />,
+    ext: true,
+  },
+  {
+    id: 17,
+    label: 'Support',
+    link: 'https://flatlogic.com/forum/',
+    icon: <SupportIcon />,
+    ext: true,
+  },
+  {
+    id: 18,
+    label: 'FAQ',
+    link: 'https://flatlogic.com/forum/',
+    icon: <FAQIcon />,
+    ext: true,
+  },
   { id: 19, type: 'divider' },
   { id: 20, type: 'title', label: 'PROJECTS' },
   {
     id: 21,
     label: 'My recent',
     link: '',
-    icon: <Dot size="medium" color="secondary" />,
+    icon: <Dot size='medium' color='secondary' />,
   },
   {
     id: 22,
     label: 'Starred',
     link: '',
-    icon: <Dot size="medium" color="primary" />,
+    icon: <Dot size='medium' color='primary' />,
   },
   {
     id: 23,
     label: 'Background',
     link: '',
-    icon: <Dot size="medium" color="secondary" />,
+    icon: <Dot size='medium' color='secondary' />,
   },
   { id: 24, type: 'divider' },
   {
     id: 25,
     label: 'Add section',
     icon: <AddSectionIcon />,
-    click: function(event, ...rest) {
-      const name = 'addSectionClick'
-      rest.forEach(c => {
+    click: function (event, ...rest) {
+      const name = 'addSectionClick';
+      rest.forEach((c) => {
         if (c.clickName === name) {
-          return c(event)
+          return c(event);
         }
-        return false
-      })
+        return false;
+      });
     },
   },
   { id: 26, type: 'divider' },
@@ -270,14 +301,14 @@ const structure = [
     id: 29,
     label: 'Chat',
     icon: <ChatIcon />,
-    click: function(event, ...rest) {
-      const name = 'chatSetOpen'
-      rest.forEach(c => {
+    click: function (event, ...rest) {
+      const name = 'chatSetOpen';
+      rest.forEach((c) => {
         if (c.clickName === name) {
-          return c(event)
+          return c(event);
         }
-        return false
-      })
+        return false;
+      });
     },
   },
 ];
