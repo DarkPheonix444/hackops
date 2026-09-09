@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('borrower', '0002_borrower_cibil_score'),
+        ('borrower', '0003_borrower_cibil_score'),
     ]
 
     operations = [

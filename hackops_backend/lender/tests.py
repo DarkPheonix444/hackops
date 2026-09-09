@@ -4,9 +4,13 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from borrower.models import Borrower
+from borrower.models import Borrower, BorrowerDocument
 from .models import LoanApplication
-from .scoring import calculate_layer3_financial_score
+from .scoring import (
+    calculate_layer2_trust_score,
+    calculate_layer3_financial_score,
+    calculate_layer4_decision,
+)
 
 User = get_user_model()
 
@@ -223,6 +227,202 @@ class Layer3ScoringUnitTests(TestCase):
         self.assertEqual(risk_level, "HIGH")
 
 
+class Layer2TrustScoringUnitTests(TestCase):
+    """Unit tests for calculate_layer2_trust_score."""
+
+    def test_name_match_in_extracted_name(self):
+        borrower = {
+            "name": "Jane Doe",
+            "pan_number": "ABCDE1234F",
+            "monthly_income": 50000,
+            "documents": [
+                {
+                    "extracted_name": "JANE DOE",
+                    "verification_notes": "",
+                    "extracted_document_number": "",
+                    "extracted_income": 0,
+                    "document_type": "PAN",
+                    "verification_status": "PENDING",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["name_points"], 30)
+        self.assertTrue(breakdown["name_match"])
+        self.assertEqual(trust_score, 30)
+
+    def test_name_match_in_verification_notes(self):
+        borrower = {
+            "name": "Jane Doe",
+            "documents": [
+                {
+                    "extracted_name": "Unknown",
+                    "verification_notes": "Verified name Jane Doe successfully via Aadhaar QR",
+                    "extracted_document_number": "",
+                    "extracted_income": 0,
+                    "document_type": "AADHAAR",
+                    "verification_status": "PENDING",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["name_points"], 30)
+        self.assertTrue(breakdown["name_match"])
+
+    def test_id_match_pan_number(self):
+        borrower = {
+            "pan_number": "ABCDE1234F",
+            "documents": [
+                {
+                    "extracted_name": "",
+                    "extracted_document_number": "ABCDE1234F",
+                    "document_type": "PAN",
+                    "verification_status": "PENDING",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["id_points"], 25)
+        self.assertTrue(breakdown["id_match"])
+        self.assertEqual(trust_score, 25)
+
+    def test_income_match_threshold(self):
+        # monthly_income = 100000, 90% threshold = 90000
+        # Doc 1: extracted_income = 95000 >= 90000 -> Match
+        borrower = {
+            "monthly_income": 100000,
+            "documents": [
+                {
+                    "extracted_income": 95000,
+                    "document_type": "BANK_STATEMENT",
+                    "verification_status": "PENDING",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["income_points"], 25)
+        self.assertTrue(breakdown["income_match"])
+        self.assertEqual(trust_score, 25)
+
+    def test_income_mismatch_below_threshold(self):
+        # monthly_income = 100000, 90% threshold = 90000
+        # Doc 1: extracted_income = 85000 < 90000 -> No match
+        borrower = {
+            "monthly_income": 100000,
+            "documents": [
+                {
+                    "extracted_income": 85000,
+                    "document_type": "BANK_STATEMENT",
+                    "verification_status": "PENDING",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["income_points"], 0)
+        self.assertFalse(breakdown["income_match"])
+
+    def test_document_presence_verified_two_docs(self):
+        # At least 2 documents among (PAN, AADHAAR, BANK_STATEMENT) with verification_status == 'VERIFIED'
+        borrower = {
+            "documents": [
+                {"document_type": "PAN", "verification_status": "VERIFIED"},
+                {"document_type": "AADHAAR", "verification_status": "VERIFIED"},
+                {"document_type": "OTHER", "verification_status": "VERIFIED"},
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["doc_presence_points"], 20)
+        self.assertTrue(breakdown["doc_presence_match"])
+        self.assertEqual(breakdown["doc_presence_count"], 2)
+        self.assertEqual(trust_score, 20)
+
+    def test_document_presence_less_than_two_verified(self):
+        borrower = {
+            "documents": [
+                {"document_type": "PAN", "verification_status": "VERIFIED"},
+                {"document_type": "AADHAAR", "verification_status": "PENDING"},
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(breakdown["doc_presence_points"], 0)
+        self.assertFalse(breakdown["doc_presence_match"])
+
+    def test_perfect_layer2_score(self):
+        borrower = {
+            "name": "Jane Doe",
+            "pan_number": "ABCDE1234F",
+            "monthly_income": 100000,
+            "documents": [
+                {
+                    "extracted_name": "Jane Doe",
+                    "extracted_document_number": "ABCDE1234F",
+                    "document_type": "PAN",
+                    "verification_status": "VERIFIED",
+                },
+                {
+                    "extracted_name": "Jane Doe",
+                    "extracted_income": 100000,
+                    "document_type": "BANK_STATEMENT",
+                    "verification_status": "VERIFIED",
+                }
+            ]
+        }
+        trust_score, breakdown = calculate_layer2_trust_score(borrower)
+        self.assertEqual(trust_score, 100)
+        self.assertEqual(breakdown["name_points"], 30)
+        self.assertEqual(breakdown["id_points"], 25)
+        self.assertEqual(breakdown["income_points"], 25)
+        self.assertEqual(breakdown["doc_presence_points"], 20)
+
+
+class Layer4DecisionUnitTests(TestCase):
+    """Unit tests for calculate_layer4_decision."""
+
+    def test_composite_approved_gte_80(self):
+        # Trust = 80, Financial = 80 -> Composite = 80.0 -> APPROVED, 100%, 10.5%
+        composite, status_val, terms = calculate_layer4_decision(
+            trust_score=80, financial_score=80, amount_requested=200000
+        )
+        self.assertEqual(composite, 80.0)
+        self.assertEqual(status_val, "APPROVED")
+        self.assertEqual(terms["approved_percentage"], 100)
+        self.assertEqual(terms["approved_amount"], 200000.0)
+        self.assertEqual(terms["rate"], "10.5%")
+
+    def test_composite_ready_for_lender_60_to_80(self):
+        # Trust = 60, Financial = 70 -> Composite = 18 + 49 = 67.0 -> READY_FOR_LENDER, 80%, 13.0%
+        composite, status_val, terms = calculate_layer4_decision(
+            trust_score=60, financial_score=70, amount_requested=100000
+        )
+        self.assertEqual(composite, 67.0)
+        self.assertEqual(status_val, "READY_FOR_LENDER")
+        self.assertEqual(terms["approved_percentage"], 80)
+        self.assertEqual(terms["approved_amount"], 80000.0)
+        self.assertEqual(terms["rate"], "13.0%")
+
+    def test_composite_ready_for_lender_40_to_60(self):
+        # Trust = 30, Financial = 50 -> Composite = 9 + 35 = 44.0 -> READY_FOR_LENDER, 50%, 15.5%
+        composite, status_val, terms = calculate_layer4_decision(
+            trust_score=30, financial_score=50, amount_requested=100000
+        )
+        self.assertEqual(composite, 44.0)
+        self.assertEqual(status_val, "READY_FOR_LENDER")
+        self.assertEqual(terms["approved_percentage"], 50)
+        self.assertEqual(terms["approved_amount"], 50000.0)
+        self.assertEqual(terms["rate"], "15.5%")
+
+    def test_composite_rejected_lt_40(self):
+        # Trust = 20, Financial = 30 -> Composite = 6 + 21 = 27.0 -> REJECTED, 0%, N/A
+        composite, status_val, terms = calculate_layer4_decision(
+            trust_score=20, financial_score=30, amount_requested=100000
+        )
+        self.assertEqual(composite, 27.0)
+        self.assertEqual(status_val, "REJECTED")
+        self.assertEqual(terms["approved_percentage"], 0)
+        self.assertEqual(terms["approved_amount"], 0.0)
+        self.assertEqual(terms["rate"], "N/A")
+
+
 class LenderEvaluationAPITests(TestCase):
     """Unit and Integration tests for /api/lender/evaluate/<application_id>/ endpoint."""
 
@@ -246,6 +446,21 @@ class LenderEvaluationAPITests(TestCase):
             cibil_score=780,
             employment_type="SALARIED",
         )
+        # Create verified documents for borrower so Trust Score = 100
+        BorrowerDocument.objects.create(
+            borrower=self.borrower,
+            document_type="PAN",
+            verification_status="VERIFIED",
+            extracted_name="John Applicant",
+            extracted_document_number="ABCDE9999F",
+            extracted_income=Decimal("100000.00"),
+        )
+        BorrowerDocument.objects.create(
+            borrower=self.borrower,
+            document_type="AADHAAR",
+            verification_status="VERIFIED",
+            extracted_name="John Applicant",
+        )
         self.application = LoanApplication.objects.create(
             borrower=self.user,
             amount_requested=Decimal("120000.00"),
@@ -261,6 +476,9 @@ class LenderEvaluationAPITests(TestCase):
         self.assertEqual(data["status"], "APPROVED")
         self.assertEqual(data["ai_risk_level"], "LOW")
         self.assertEqual(data["ai_trust_score"], 100)
+        self.assertEqual(data["composite_score"], 100.0)
+        self.assertEqual(data["ai_recommended_terms"]["approved_percentage"], 100)
+        self.assertEqual(data["ai_recommended_terms"]["rate"], "10.5%")
         self.assertIn("APPROVED", data["decision_notes"])
 
         # Check DB state
@@ -268,10 +486,15 @@ class LenderEvaluationAPITests(TestCase):
         self.assertEqual(self.application.status, "APPROVED")
         self.assertEqual(self.application.ai_trust_score, 100)
         self.assertEqual(self.application.ai_risk_level, "LOW")
+        self.assertEqual(self.application.ai_recommended_terms["approved_percentage"], 100)
+        self.assertIn("composite_score", self.application.ai_risk_breakdown)
         self.assertIsNotNone(self.application.decided_at)
 
-    def test_evaluate_endpoint_medium_risk_ready_for_lender(self):
-        # Modify borrower to medium risk
+    def test_evaluate_endpoint_ready_for_lender_80_percent(self):
+        # Modify borrower to have composite score in [60, 80)
+        # E.g. Remove one document so trust = 80 (name=30, id=25, income=25, presence=0)
+        BorrowerDocument.objects.filter(borrower=self.borrower, document_type="AADHAAR").delete()
+        # Financial capacity: DTI=30% -> 25pts, DSCR=2.0 -> 20pts, cibil=680 -> 12pts, self_employed -> 6pts = 63pts
         self.borrower.existing_monthly_obligations = Decimal("30000.00")
         self.borrower.amount_requested = Decimal("420000.00")
         self.borrower.cibil_score = 680
@@ -281,30 +504,56 @@ class LenderEvaluationAPITests(TestCase):
         self.application.amount_requested = Decimal("420000.00")
         self.application.save()
 
+        # Trust = 80, Financial = 63 -> Composite = 80*0.3 + 63*0.7 = 24 + 44.1 = 68.1 (in 60..80)
         url = f"/api/lender/evaluate/{self.application.id}/"
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(data["status"], "READY_FOR_LENDER")
         self.assertEqual(data["ai_risk_level"], "MEDIUM")
-        self.assertEqual(data["ai_trust_score"], 63)
+        self.assertEqual(data["ai_trust_score"], 80)
+        self.assertEqual(data["composite_score"], 68.1)
+        self.assertEqual(data["ai_recommended_terms"]["approved_percentage"], 80)
+        self.assertEqual(data["ai_recommended_terms"]["rate"], "13.0%")
 
-    def test_evaluate_endpoint_dscr_below_1_rejected(self):
-        # Modify borrower to have DSCR < 1.0 (EMI 60000 vs Disposable 40000)
-        self.borrower.existing_monthly_obligations = Decimal("60000.00")  # Disposable = 40000
-        self.borrower.amount_requested = Decimal("720000.00")  # EMI = 60000, DSCR = 40/60 = 0.67 < 1.0
-        self.borrower.cibil_score = 780
-        self.borrower.employment_type = "SALARIED"
+    def test_evaluate_endpoint_ready_for_lender_50_percent(self):
+        # Remove documents so Trust = 0
+        BorrowerDocument.objects.filter(borrower=self.borrower).delete()
+        # Financial = 73 (low obligations, good cibil, salaried) -> Composite = 0*0.3 + 73*0.7 = 51.1 (in 40..60)
+        # Let's set financial to 70: DTI 20% (40), DSCR 1.2 (10), cibil 680 (12), salaried (10) -> 72
+        # 72 * 0.7 = 50.4
+        self.borrower.existing_monthly_obligations = Decimal("20000.00")
+        self.borrower.amount_requested = Decimal("720000.00")  # EMI 60000, DSCR 80000/60000=1.33 -> 10 pts
+        self.borrower.cibil_score = 680  # 12 pts
+        self.borrower.employment_type = "SALARIED"  # 10 pts
         self.borrower.save()
 
-        self.application.amount_requested = Decimal("720000.00")
-        self.application.save()
+        url = f"/api/lender/evaluate/{self.application.id}/"
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(data["status"], "READY_FOR_LENDER")
+        self.assertEqual(data["ai_recommended_terms"]["approved_percentage"], 50)
+        self.assertEqual(data["ai_recommended_terms"]["rate"], "15.5%")
+
+    def test_evaluate_endpoint_rejected_below_40(self):
+        # Remove all documents: Trust = 0
+        BorrowerDocument.objects.filter(borrower=self.borrower).delete()
+        # High obligations -> Financial = 10 -> Composite = 0*0.3 + 10*0.7 = 7.0 < 40
+        self.borrower.existing_monthly_obligations = Decimal("60000.00")
+        self.borrower.amount_requested = Decimal("1200000.00")
+        self.borrower.cibil_score = 600
+        self.borrower.employment_type = "STUDENT"
+        self.borrower.save()
 
         url = f"/api/lender/evaluate/{self.application.id}/"
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(data["status"], "REJECTED")
+        self.assertEqual(data["ai_risk_level"], "HIGH")
+        self.assertEqual(data["ai_recommended_terms"]["approved_percentage"], 0)
+        self.assertEqual(data["ai_recommended_terms"]["rate"], "N/A")
         self.assertIn("REJECTED", data["decision_notes"])
 
     def test_evaluate_endpoint_get_method_supported(self):

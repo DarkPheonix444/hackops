@@ -124,13 +124,20 @@ class LenderProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-from .scoring import calculate_layer3_financial_score
+from .scoring import (
+    calculate_layer2_trust_score,
+    calculate_layer3_financial_score,
+    calculate_layer4_decision,
+)
 
 
 class LenderEvaluationView(APIView):
     """
-    Evaluates a loan application and its associated borrower using Layer 3
-    Financial Capacity Scoring, updating risk level, trust score, and status.
+    Evaluates a loan application and its associated borrower using:
+    - Layer 2: OCR Trust Engine
+    - Layer 3: Financial Capacity Scoring
+    - Layer 4: Personalized Decision Engine (Composite Decisioning)
+
     Endpoint: /api/lender/evaluate/<int:application_id>/
     """
     permission_classes = []
@@ -177,45 +184,65 @@ class LenderEvaluationView(APIView):
         elif (not application.amount_requested or application.amount_requested == 0) and borrower.amount_requested:
             application.amount_requested = borrower.amount_requested
 
-        total_score, risk_level, breakdown = calculate_layer3_financial_score(borrower)
+        # Layer 2: OCR Trust Engine
+        trust_score, trust_breakdown = calculate_layer2_trust_score(borrower)
 
-        dscr = breakdown.get("dscr", 0.0)
+        # Layer 3: Financial Capacity Scoring
+        financial_score, financial_risk_level, financial_breakdown = calculate_layer3_financial_score(borrower)
 
-        # Decision rules:
-        # Set to 'REJECTED' if High Risk or DSCR < 1.0;
-        # Set to 'READY_FOR_LENDER' if Medium Risk;
-        # Set to 'APPROVED' if Low Risk.
-        if risk_level == "HIGH" or dscr < 1.0:
-            new_status = "REJECTED"
-            if dscr < 1.0:
-                decision_notes = (
-                    f"Automated Layer 3 Decision: REJECTED due to critical debt coverage failure "
-                    f"(DSCR: {dscr:.2f} < 1.0, Trust Score: {total_score}/100, Risk: {risk_level})."
-                )
-            else:
-                decision_notes = (
-                    f"Automated Layer 3 Decision: REJECTED due to elevated financial risk profile "
-                    f"(Trust Score: {total_score}/100, Risk: HIGH, DSCR: {dscr:.2f})."
-                )
-        elif risk_level == "MEDIUM":
-            new_status = "READY_FOR_LENDER"
+        # Layer 4: Personalized Decision Engine
+        amount_req = float(application.amount_requested or borrower.amount_requested or 0.0)
+        composite_score, new_status, ai_recommended_terms = calculate_layer4_decision(
+            trust_score=trust_score,
+            financial_score=financial_score,
+            amount_requested=amount_req,
+        )
+
+        # Determine overall risk level
+        if composite_score >= 80.0:
+            risk_level = "LOW"
+        elif composite_score >= 40.0:
+            risk_level = "MEDIUM"
+        else:
+            risk_level = "HIGH"
+
+        # Build decision notes
+        if new_status == "APPROVED":
             decision_notes = (
-                f"Automated Layer 3 Decision: READY_FOR_LENDER. Moderate financial capacity profile "
-                f"(Trust Score: {total_score}/100, Risk: MEDIUM, DSCR: {dscr:.2f}). Forwarded for lender review."
+                f"Automated Decision: APPROVED. Composite Score: {composite_score:.1f}/100 "
+                f"(Trust Score: {trust_score}/100, Financial Score: {financial_score}/100, Risk: {risk_level}). "
+                f"Approved 100% (${ai_recommended_terms['approved_amount']:,.2f}) at {ai_recommended_terms['rate']} interest rate."
             )
-        elif risk_level == "LOW":
-            new_status = "APPROVED"
+        elif new_status == "READY_FOR_LENDER":
             decision_notes = (
-                f"Automated Layer 3 Decision: APPROVED. Strong financial capacity profile "
-                f"(Trust Score: {total_score}/100, Risk: LOW, DSCR: {dscr:.2f})."
+                f"Automated Decision: READY_FOR_LENDER. Composite Score: {composite_score:.1f}/100 "
+                f"(Trust Score: {trust_score}/100, Financial Score: {financial_score}/100, Risk: {risk_level}). "
+                f"Recommended {ai_recommended_terms['approved_amount_percentage']} (${ai_recommended_terms['approved_amount']:,.2f}) "
+                f"at {ai_recommended_terms['rate']} interest rate. Forwarded for lender review."
             )
         else:
-            new_status = "REJECTED"
-            decision_notes = f"Automated Layer 3 Decision: REJECTED due to undetermined risk profile ({risk_level})."
+            decision_notes = (
+                f"Automated Decision: REJECTED. Composite Score: {composite_score:.1f}/100 "
+                f"(Trust Score: {trust_score}/100, Financial Score: {financial_score}/100, Risk: {risk_level}). "
+                f"Score below minimum threshold (40)."
+            )
 
-        application.ai_trust_score = total_score
+        # Combine breakdowns
+        combined_breakdown = {
+            **financial_breakdown,
+            "composite_score": composite_score,
+            "trust_score": trust_score,
+            "financial_score": financial_score,
+            "ai_risk_level": risk_level,
+            "layer2_trust_engine": trust_breakdown,
+            "layer3_financial_engine": financial_breakdown,
+            "layer4_decision_engine": ai_recommended_terms,
+        }
+
+        application.ai_trust_score = trust_score
         application.ai_risk_level = risk_level
-        application.ai_risk_breakdown = breakdown
+        application.ai_risk_breakdown = combined_breakdown
+        application.ai_recommended_terms = ai_recommended_terms
         application.status = new_status
         application.decision_notes = decision_notes
         application.decided_at = timezone.now()
@@ -228,7 +255,11 @@ class LenderEvaluationView(APIView):
                 "application_id": application.id,
                 "status": application.status,
                 "ai_trust_score": application.ai_trust_score,
+                "composite_score": composite_score,
+                "trust_score": trust_score,
+                "financial_score": financial_score,
                 "ai_risk_level": application.ai_risk_level,
+                "ai_recommended_terms": application.ai_recommended_terms,
                 "decision_notes": application.decision_notes,
                 "ai_risk_breakdown": application.ai_risk_breakdown,
                 "application": response_serializer.data,

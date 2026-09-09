@@ -2,7 +2,10 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import fitz
+try:
+    import fitz
+except ImportError:
+    fitz = None
 
 logger = logging.getLogger(__name__)
 _ocr_engine = None
@@ -72,6 +75,8 @@ def _ocr_image(image_path):
 
 
 def _process_pdf(file_path):
+    if fitz is None:
+        raise OCRProcessingError("PyMuPDF (fitz) is not installed.")
     document = fitz.open(file_path)
     try:
         direct_text = "\n".join(page.get_text("text") for page in document).strip()
