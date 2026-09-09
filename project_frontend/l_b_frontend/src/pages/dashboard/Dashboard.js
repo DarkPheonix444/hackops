@@ -36,6 +36,8 @@ import {
   VerifiedUser as VerifiedIcon,
   Send as SendIcon,
   Edit as EditIcon,
+  FactCheck as FactCheckIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 
 // context
@@ -208,6 +210,23 @@ export default function Dashboard() {
     fetchLenderData();
   }, [fetchBorrowerData, fetchLenderData]);
 
+<<<<<<< HEAD
+=======
+  // Handle Tab / Role Switch
+  const handleTabChange = (event, newTab) => {
+    if (newTab === 'admin') {
+      navigate('/app/admin');
+      return;
+    }
+    if (newTab === 'company') {
+      navigate('/app/company');
+      return;
+    }
+    setActiveTab(newTab);
+    switchUserRole(userDispatch, newTab);
+  };
+
+>>>>>>> bf0cb5f377825ab895829115554e13c058241ebb
   // ========================================================
   // BORROWER ACTIONS
   // ========================================================
@@ -504,6 +523,7 @@ export default function Dashboard() {
           </Grid>
         </Grid>
 
+<<<<<<< HEAD
       </Paper>
 
       <Paper
@@ -533,6 +553,67 @@ export default function Dashboard() {
             <Typography style={{ color: '#ffffff', fontWeight: 700, textTransform: 'capitalize' }}>{activeTab}</Typography>
           </Grid>
         </Grid>
+=======
+        {/* PERSPECTIVE SWITCHER TABS */}
+        <Box mt={3}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            indicatorColor='primary'
+            textColor='primary'
+            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}
+          >
+            <Tab
+              value='borrower'
+              icon={<BorrowerIcon />}
+              iconPosition='start'
+              label='Borrower Portal (Profile & KYC Uploads)'
+              style={{
+                color: activeTab === 'borrower' ? '#38bdf8' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+            <Tab
+              value='lender'
+              icon={<LenderIcon />}
+              iconPosition='start'
+              label='Lender Portal (Marketplace Feed & Decisions)'
+              style={{
+                color: activeTab === 'lender' ? '#10b981' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+            <Tab
+              value='company'
+              icon={<FactCheckIcon />}
+              iconPosition='start'
+              label='Company Verification (Underwriting & OCR Audit)'
+              style={{
+                color: '#38bdf8',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+            <Tab
+              value='admin'
+              icon={<AdminIcon />}
+              iconPosition='start'
+              label='Admin Command Center (Validate Requests)'
+              style={{
+                color: '#c084fc',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+              }}
+            />
+          </Tabs>
+        </Box>
+>>>>>>> bf0cb5f377825ab895829115554e13c058241ebb
       </Paper>
 
       {/* ========================================================

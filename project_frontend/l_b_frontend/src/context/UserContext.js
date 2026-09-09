@@ -161,16 +161,20 @@ export async function loginUser(
 
       showSnackbar({
         type: 'success',
-        message: `Welcome back, ${meData.name || 'User'}! Signed in as ${role === 'lender' ? 'Lender' : 'Borrower'}.`,
+        message: `Welcome back, ${meData.name || 'User'}! Signed in as ${role === 'admin' ? 'Administrator' : role === 'lender' ? 'Lender' : 'Borrower'}.`,
       });
 
       if (setError) setError(null);
       if (setIsLoading) setIsLoading(false);
 
       if (navigate) {
-        navigate('/app/dashboard');
+        if (role === 'admin') {
+          navigate('/app/admin');
+        } else {
+          navigate('/app/dashboard');
+        }
       } else {
-        window.location.href = '#/app/dashboard';
+        window.location.href = role === 'admin' ? '#/app/admin' : '#/app/dashboard';
       }
     } else {
       throw new Error('No access token returned');
@@ -199,7 +203,7 @@ export function switchUserRole(dispatch, newRole) {
   });
   showSnackbar({
     type: 'info',
-    message: `Switched dashboard perspective to ${newRole === 'lender' ? 'Lender Hub' : 'Borrower Hub'}`,
+    message: `Switched dashboard perspective to ${newRole === 'company' ? 'Company Verification Hub' : newRole === 'lender' ? 'Lender Hub' : 'Borrower Hub'}`,
   });
 }
 

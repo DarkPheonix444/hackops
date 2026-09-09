@@ -171,3 +171,102 @@ class DocumentProcessView(APIView):
 			DocumentProcessingSerializer(processing).data,
 			status=status.HTTP_200_OK,
 		)
+
+
+class CompanyBorrowerValidateView(APIView):
+	permission_classes = [CompanyOnlyPermission]
+
+	def post(self, request, borrower_id):
+		try:
+			borrower = Borrower.objects.get(pk=borrower_id)
+		except Borrower.DoesNotExist:
+			return Response(
+				{"detail": "Borrower not found."},
+				status=status.HTTP_404_NOT_FOUND,
+			)
+
+		action = request.data.get("action", "").upper()
+		notes = request.data.get("notes", "")
+		verification_status = request.data.get("verification_status")
+		application_status = request.data.get("application_status")
+
+		from borrower.models import BorrowerVerification
+
+		verification = borrower.verifications.order_by("-updated_at").first()
+		if not verification:
+			verification = BorrowerVerification.objects.create(
+				borrower=borrower,
+				verification_status=BorrowerVerification.VerificationStatus.PENDING,
+			)
+
+		if action == "VERIFY":
+			borrower.application_status = Borrower.ApplicationStatus.VERIFIED
+			verification.verification_status = BorrowerVerification.VerificationStatus.VERIFIED
+			borrower.documents.filter(
+				verification_status__in=[
+					BorrowerDocument.VerificationStatus.PENDING,
+					BorrowerDocument.VerificationStatus.PROCESSING,
+				]
+			).update(verification_status=BorrowerDocument.VerificationStatus.VERIFIED)
+		elif action == "REVERIFY":
+			borrower.application_status = Borrower.ApplicationStatus.REVERIFICATION
+			verification.verification_status = BorrowerVerification.VerificationStatus.REVERIFICATION
+			borrower.documents.filter(
+				verification_status=BorrowerDocument.VerificationStatus.PENDING
+			).update(verification_status=BorrowerDocument.VerificationStatus.REVERIFICATION)
+		elif action == "REJECT":
+			borrower.application_status = Borrower.ApplicationStatus.REJECTED
+			verification.verification_status = BorrowerVerification.VerificationStatus.FAILED
+		elif action == "APPROVE":
+			borrower.application_status = Borrower.ApplicationStatus.APPROVED
+			verification.verification_status = BorrowerVerification.VerificationStatus.VERIFIED
+
+		if verification_status:
+			verification.verification_status = verification_status
+		if application_status:
+			borrower.application_status = application_status
+
+		if notes:
+			explanations = list(verification.explanation or [])
+			explanations.append(f"Admin validation note: {notes}")
+			verification.explanation = explanations
+
+		borrower.save(update_fields=["application_status", "updated_at"])
+		verification.save()
+
+		# Synchronize with LoanApplication for lender marketplace if verified or approved
+		if borrower.application_status in [
+			Borrower.ApplicationStatus.VERIFIED,
+			Borrower.ApplicationStatus.APPROVED,
+		]:
+			from lender.models import LoanApplication
+			loan_app, created = LoanApplication.objects.get_or_create(
+				borrower=borrower.user,
+				defaults={
+					"amount_requested": borrower.amount_requested,
+					"purpose": borrower.loan_purpose or "General Financing",
+					"status": (
+						"APPROVED"
+						if borrower.application_status == Borrower.ApplicationStatus.APPROVED
+						else "READY_FOR_LENDER"
+					),
+				},
+			)
+			if not created:
+				if borrower.application_status == Borrower.ApplicationStatus.APPROVED:
+					loan_app.status = "APPROVED"
+				elif loan_app.status not in ["APPROVED", "REJECTED"]:
+					loan_app.status = "READY_FOR_LENDER"
+				loan_app.amount_requested = borrower.amount_requested
+				loan_app.save(update_fields=["status", "amount_requested", "updated_at"])
+
+		serializer = CompanyBorrowerDetailSerializer(
+			borrower, context={"request": request}
+		)
+		return Response(
+			{
+				"message": f"Borrower application validated as {borrower.application_status}.",
+				"borrower": serializer.data,
+			},
+			status=status.HTTP_200_OK,
+		)

@@ -5,6 +5,7 @@ from .views import (
     CompanyBorrowerDetailView,
     CompanyBorrowerDocumentsView,
     CompanyBorrowerListView,
+    CompanyBorrowerValidateView,
     DocumentProcessView,
 )
 
@@ -19,6 +20,11 @@ urlpatterns = [
         "borrowers/<int:borrower_id>/",
         CompanyBorrowerDetailView.as_view(),
         name="co-borrower-detail",
+    ),
+    path(
+        "borrowers/<int:borrower_id>/validate/",
+        CompanyBorrowerValidateView.as_view(),
+        name="co-borrower-validate",
     ),
     path(
         "borrowers/<int:borrower_id>/documents/",
