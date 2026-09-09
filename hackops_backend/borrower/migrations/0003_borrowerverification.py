@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('borrower', '0001_initial'),
+        ('borrower', '0002_borrower_cibil_score'),
     ]
 
     operations = [

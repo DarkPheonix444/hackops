@@ -19,6 +19,7 @@ import Verify from '../pages/verify';
 import Reset from '../pages/reset';
 import Homepage from '../pages/homepage/Homepage';
 import VerificationPage from '../pages/verification/VerificationPage';
+import LoanPartyForms from '../pages/forms/LoanPartyForms';
 
 // context
 import { useUserState } from '../context/UserContext';
@@ -78,6 +79,8 @@ export default function App() {
             />
             <Route path='/verification' element={<VerificationPage />} />
             <Route path='/app/verification' element={<VerificationPage />} />
+            <Route path='/loan-forms' element={<LoanPartyForms />} />
+            <Route path='/forms' element={<LoanPartyForms />} />
             <Route path='*' element={<Error />} />
           </Routes>
         </BrowserRouter>

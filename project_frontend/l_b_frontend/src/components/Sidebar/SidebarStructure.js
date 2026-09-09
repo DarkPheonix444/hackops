@@ -42,6 +42,18 @@ const structure = [
     badgeColor: 'secondary',
   },
   {
+    id: 101,
+    label: 'Borrower Form',
+    link: '/app/loan-forms?role=borrower',
+    icon: <PersonIcon />,
+  },
+  {
+    id: 102,
+    label: 'Lender Form',
+    link: '/app/loan-forms?role=lender',
+    icon: <FolderIcon />,
+  },
+  {
     id: 1,
     label: 'E-commerce',
     badge: 'NodeJS',

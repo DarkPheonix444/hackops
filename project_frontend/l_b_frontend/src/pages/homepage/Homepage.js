@@ -21,9 +21,13 @@ export default function Homepage() {
           <a href='#how-it-works'>How It Works</a>
           <a href='#intelligence'>Intelligence</a>
           <a href='#features'>Features</a>
+          <Link to='/loan-forms'>Loan Forms</Link>
         </nav>
 
         <div className='tl-nav-buttons'>
+          <Link to='/loan-forms' className='tl-secondary-btn' style={{ padding: '8px 16px', borderRadius: '999px', fontSize: '13px', textDecoration: 'none' }}>
+            Loan Forms
+          </Link>
           {isAuth ? (
             <Link to='/app/dashboard' className='tl-primary-btn'>
               Go to Dashboard ({currentUser?.name || 'My Account'}) →
@@ -61,19 +65,20 @@ export default function Homepage() {
             </p>
 
             <div className='tl-hero-buttons'>
+              <Link to='/loan-forms' className='tl-secondary-btn' style={{ borderColor: '#36d6c2', color: '#36d6c2', textDecoration: 'none' }}>
+                📋 Fill Loan Forms
+              </Link>
+              <Link to='/verification' className='tl-secondary-btn' style={{ textDecoration: 'none' }}>
+                Verify Identity →
+              </Link>
               {isAuth ? (
                 <Link to='/app/dashboard' className='tl-primary-btn'>
                   Enter Lending Dashboard <span>→</span>
                 </Link>
               ) : (
-                <>
-                  <Link to='/login' className='tl-primary-btn'>
-                    Enter Dashboard <span>→</span>
-                  </Link>
-                  <a href='#how-it-works' className='tl-secondary-btn'>
-                    Explore Intelligence
-                  </a>
-                </>
+                <Link to='/login' className='tl-primary-btn'>
+                  Enter Dashboard <span>→</span>
+                </Link>
               )}
             </div>
 
