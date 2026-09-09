@@ -6,11 +6,12 @@ export const authService = {
     return response.data;
   },
 
-  async signup(email, name, password) {
+  async signup(email, name, password, role = 'borrower') {
     const response = await api.post('/users/signup/', {
       email,
       name,
       password,
+      role,
     });
     return response.data;
   },

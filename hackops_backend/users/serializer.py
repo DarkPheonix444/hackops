@@ -7,17 +7,19 @@ User = get_user_model()
 
 class signupserializer(serializers.ModelSerializer):
     password=serializers.CharField(write_only=True,min_length=8)
+    role=serializers.ChoiceField(choices=['borrower', 'lender'], default='borrower')
 
     class Meta:
         model=User
-        fields=['email','name','password']
+        fields=['email','name','password','role']
 
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User.objects.create_user(
             email=validated_data.get('email'),
             password=password,
-            name=validated_data.get('name')
+            name=validated_data.get('name'),
+            role=validated_data.get('role', 'borrower'),
         )
         return user
 
@@ -29,6 +31,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["email"] = self.user.email
         data["name"] = self.user.name
+        data["role"] = self.user.role
         return data
 
 

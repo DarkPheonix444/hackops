@@ -155,7 +155,7 @@ export async function loginUser(
         type: 'LOGIN_SUCCESS',
         payload: {
           currentUser: meData,
-          userRole: role,
+          userRole: role || meData.role || 'borrower',
         },
       });
 
@@ -238,7 +238,7 @@ export function doInit() {
           type: 'LOGIN_SUCCESS',
           payload: {
             currentUser,
-            userRole: localStorage.getItem('user_role') || 'borrower',
+            userRole: localStorage.getItem('user_role') || currentUser.role || 'borrower',
             loadingInit: false,
           },
         });
@@ -270,7 +270,7 @@ export function registerUser(
     dispatch({ type: 'REGISTER_REQUEST' });
 
     try {
-      await authService.signup(email, name, password);
+      await authService.signup(email, name, password, role);
       dispatch({ type: 'REGISTER_SUCCESS' });
 
       showSnackbar({

@@ -27,6 +27,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SecurityIcon from '@mui/icons-material/Security';
 import BadgeIcon from '@mui/icons-material/Badge';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import HomeIcon from '@mui/icons-material/Home';
 
 import { verificationService } from '../../services/verificationService';
 
@@ -165,17 +166,33 @@ export default function VerificationPage() {
             </Typography>
           </Box>
 
-          <Chip
-            label="Demo environment · Test data"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(54, 214, 194, 0.1)',
-              color: '#36d6c2',
-              border: '1px solid rgba(54, 214, 194, 0.25)',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Chip
+              label="Demo environment · Test data"
+              size="small"
+              sx={{
+                bgcolor: 'rgba(54, 214, 194, 0.1)',
+                color: '#36d6c2',
+                border: '1px solid rgba(54, 214, 194, 0.25)',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }}
+            />
+            <Button
+              href="/app/dashboard"
+              startIcon={<HomeIcon />}
+              variant="outlined"
+              size="small"
+              sx={{
+                color: '#ffffff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                textTransform: 'none',
+                '&:hover': { borderColor: '#36d6c2', color: '#36d6c2' },
+              }}
+            >
+              Go to Dashboard
+            </Button>
+          </Box>
         </Box>
 
         {error && (

@@ -73,6 +73,7 @@ import BreadCrumbs from '../../components/BreadCrumbs';
 // context
 import { useLayoutState } from '../../context/LayoutContext';
 import { ProductsProvider } from '../../context/ProductContext';
+import { useUserState } from '../../context/UserContext';
 
 import UsersFormPage from 'pages/CRUD/Users/form/UsersFormPage';
 import UsersTablePage from 'pages/CRUD/Users/table/UsersTablePage';
@@ -82,6 +83,7 @@ import structure from '../Sidebar/SidebarStructure';
 
 function Layout() {
   const classes = useStyles();
+  const { userRole } = useUserState();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const open = Boolean(anchorEl);
@@ -96,7 +98,12 @@ function Layout() {
   return (
     <div className={classes.root}>
       <Header />
-      <Sidebar structure={structure} />
+      <Sidebar
+        structure={structure.filter((item) => {
+          if (item.role && item.role !== userRole) return false;
+          return true;
+        })}
+      />
       <div
         className={classnames(classes.content, {
           [classes.contentShift]: layoutState.isSidebarOpened,

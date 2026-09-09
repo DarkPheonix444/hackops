@@ -23,15 +23,11 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  Tabs,
-  Tab,
   Divider,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import {
-  AccountBalance as LenderIcon,
-  Person as BorrowerIcon,
   CloudUpload as UploadIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
@@ -43,27 +39,60 @@ import {
 } from '@mui/icons-material';
 
 // context
-import { useUserState, useUserDispatch, switchUserRole } from '../../context/UserContext';
+import { useUserState } from '../../context/UserContext';
 import { showSnackbar } from '../../components/Snackbar';
 
 // services
 import borrowerService, { DOCUMENT_TYPES } from '../../services/borrowerService';
 import lenderService from '../../services/lenderService';
+import authService from '../../services/authService';
+
+const demoLenderRequests = [
+  {
+    name: 'Northstar Capital',
+    type: 'NBFC Partner',
+    amount: 'Up to requested amount',
+    rate: '12.5% - 15.0%',
+    status: 'Reviewing',
+  },
+  {
+    name: 'BrightPath Finance',
+    type: 'Digital Lender',
+    amount: 'Up to 90% of request',
+    rate: '14.0% - 17.5%',
+    status: 'Interested',
+  },
+  {
+    name: 'Cedar Ridge Bank',
+    type: 'Institutional Lender',
+    amount: 'Pending verification',
+    rate: 'To be determined',
+    status: 'Awaiting KYC',
+  },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { currentUser, userRole } = useUserState();
-  const userDispatch = useUserDispatch();
+  const [userDetails, setUserDetails] = useState(currentUser);
 
   // Active view perspective: 'borrower' or 'lender'
-  const [activeTab, setActiveTab] = useState(userRole || 'borrower');
+  const activeTab = userRole || 'borrower';
 
-  // Sync tab with userRole
   useEffect(() => {
-    if (userRole && activeTab !== userRole) {
-      setActiveTab(userRole);
-    }
-  }, [userRole]);
+    let mounted = true;
+    authService
+      .getMe()
+      .then((user) => {
+        if (mounted) setUserDetails(user);
+      })
+      .catch(() => {
+        if (mounted) setUserDetails(currentUser);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser]);
 
   // ========================================================
   // BORROWER STATE
@@ -179,12 +208,6 @@ export default function Dashboard() {
     fetchLenderData();
   }, [fetchBorrowerData, fetchLenderData]);
 
-  // Handle Tab / Role Switch
-  const handleTabChange = (event, newTab) => {
-    setActiveTab(newTab);
-    switchUserRole(userDispatch, newTab);
-  };
-
   // ========================================================
   // BORROWER ACTIONS
   // ========================================================
@@ -196,6 +219,14 @@ export default function Dashboard() {
   };
 
   const handleUploadDocument = async () => {
+    if (!borrowerProfile) {
+      showSnackbar({
+        type: 'warning',
+        message: 'Save your borrower profile before uploading documents.',
+      });
+      return;
+    }
+
     if (!selectedFile) {
       showSnackbar({ type: 'warning', message: 'Please select a file to upload.' });
       return;
@@ -407,10 +438,10 @@ export default function Dashboard() {
               </div>
               <div>
                 <Typography variant='h4' style={{ fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px' }}>
-                  Welcome back, {currentUser?.name || 'User'}!
+                  Welcome back, {userDetails?.name || 'User'}!
                 </Typography>
                 <Typography variant='body2' style={{ color: '#94a3b8', marginTop: 2 }}>
-                  {currentUser?.email || 'Logged In'} | Integrated Live Django APIs: Users, Borrower & Lender
+                  {userDetails?.email || 'Logged In'} | {activeTab === 'lender' ? 'Lender' : 'Borrower'} account
                 </Typography>
               </div>
             </Box>
@@ -473,41 +504,35 @@ export default function Dashboard() {
           </Grid>
         </Grid>
 
-        {/* PERSPECTIVE SWITCHER TABS */}
-        <Box mt={3}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            indicatorColor='primary'
-            textColor='primary'
-            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}
-          >
-            <Tab
-              value='borrower'
-              icon={<BorrowerIcon />}
-              iconPosition='start'
-              label='Borrower Portal (Profile & KYC Uploads)'
-              style={{
-                color: activeTab === 'borrower' ? '#38bdf8' : '#94a3b8',
-                fontWeight: 700,
-                fontSize: 14,
-                textTransform: 'none',
-              }}
-            />
-            <Tab
-              value='lender'
-              icon={<LenderIcon />}
-              iconPosition='start'
-              label='Lender Portal (Marketplace Feed & Decisions)'
-              style={{
-                color: activeTab === 'lender' ? '#10b981' : '#94a3b8',
-                fontWeight: 700,
-                fontSize: 14,
-                textTransform: 'none',
-              }}
-            />
-          </Tabs>
-        </Box>
+      </Paper>
+
+      <Paper
+        elevation={2}
+        style={{
+          padding: '20px 24px',
+          borderRadius: 14,
+          background: '#111c3a',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: 28,
+        }}
+      >
+        <Typography variant='overline' style={{ color: '#38bdf8', fontWeight: 800 }}>
+          User Details
+        </Typography>
+        <Grid container spacing={2} mt={0.5}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant='caption' style={{ color: '#94a3b8' }}>Name</Typography>
+            <Typography style={{ color: '#ffffff', fontWeight: 700 }}>{userDetails?.name || 'Not available'}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant='caption' style={{ color: '#94a3b8' }}>Email</Typography>
+            <Typography style={{ color: '#ffffff', fontWeight: 700 }}>{userDetails?.email || 'Not available'}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant='caption' style={{ color: '#94a3b8' }}>Account Type</Typography>
+            <Typography style={{ color: '#ffffff', fontWeight: 700, textTransform: 'capitalize' }}>{activeTab}</Typography>
+          </Grid>
+        </Grid>
       </Paper>
 
       {/* ========================================================
@@ -681,6 +706,25 @@ export default function Dashboard() {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Date of Birth</Typography>
+                  <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#fff' }}>
+                    {borrowerProfile.date_of_birth || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Name as per Aadhaar</Typography>
+                  <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#fff' }}>
+                    {borrowerProfile.name_as_per_aadhaar || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Name as per PAN</Typography>
+                  <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#fff' }}>
+                    {borrowerProfile.name_as_per_pan || 'N/A'}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Typography variant='caption' style={{ color: '#94a3b8' }}>Employer / Business</Typography>
                   <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#fff' }}>
                     {borrowerProfile.employer_or_business_name || 'N/A'}
@@ -690,6 +734,12 @@ export default function Dashboard() {
                   <Typography variant='caption' style={{ color: '#94a3b8' }}>Monthly Income</Typography>
                   <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#10b981' }}>
                     ₹{Number(borrowerProfile.monthly_income || 0).toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Annual Gross Income</Typography>
+                  <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#10b981' }}>
+                    ₹{Number(borrowerProfile.annual_gross_income || 0).toLocaleString()}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -704,16 +754,71 @@ export default function Dashboard() {
                     {borrowerProfile.city ? `${borrowerProfile.city}, ${borrowerProfile.state}` : 'N/A'}
                   </Typography>
                 </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Credit / CIBIL Score</Typography>
+                  <Typography variant='subtitle1' style={{ fontWeight: 700, color: '#f59e0b' }}>
+                    {borrowerProfile.credit_score || 'N/A'} / {borrowerProfile.cibil_score || 'N/A'}
+                  </Typography>
+                </Grid>
 
                 <Grid size={{ xs: 12 }}>
+                  <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
+                  <Typography variant='caption' style={{ color: '#94a3b8' }}>Full Address</Typography>
+                  <Typography variant='body2' style={{ color: '#cbd5e1', marginTop: 2 }}>
+                    {borrowerProfile.address_line || 'N/A'}{borrowerProfile.pincode ? `, ${borrowerProfile.pincode}` : ''}
+                  </Typography>
                   <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
                   <Typography variant='caption' style={{ color: '#94a3b8' }}>Loan Purpose & Details</Typography>
                   <Typography variant='body1' style={{ color: '#cbd5e1', marginTop: 2 }}>
                     <strong>{borrowerProfile.loan_purpose || 'General Loan'}</strong>: {borrowerProfile.loan_purpose_details || 'No additional details provided.'}
                   </Typography>
+                  <Typography variant='body2' style={{ color: '#94a3b8', marginTop: 8 }}>
+                    Requested tenure: {borrowerProfile.requested_tenure_months || 'N/A'} months · Repayment: {borrowerProfile.repayment_frequency || 'N/A'}
+                  </Typography>
                 </Grid>
               </Grid>
             ) : null}
+          </Paper>
+
+          <Paper
+            elevation={2}
+            style={{
+              padding: 24,
+              borderRadius: 16,
+              background: '#111c3a',
+              border: '1px solid rgba(56, 189, 248, 0.2)',
+              marginBottom: 28,
+            }}
+          >
+            <Box display='flex' justifyContent='space-between' alignItems='center' mb={2} flexWrap='wrap' gap={1}>
+              <div>
+                <Typography variant='h6' style={{ fontWeight: 700, color: '#f8fafc' }}>
+                  Lenders Requesting This Loan
+                </Typography>
+                <Typography variant='body2' style={{ color: '#94a3b8' }}>
+                  Demo lender interest shown for now. Live lender requests will come from the backend feed.
+                </Typography>
+              </div>
+              <Chip label='Demo data' size='small' style={{ color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)' }} />
+            </Box>
+            <Grid container spacing={2}>
+              {demoLenderRequests.map((lender) => (
+                <Grid size={{ xs: 12, md: 4 }} key={lender.name}>
+                  <Card style={{ height: '100%', background: '#0c1630', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+                    <CardContent>
+                      <Typography variant='subtitle1' style={{ color: '#ffffff', fontWeight: 800 }}>
+                        {lender.name}
+                      </Typography>
+                      <Typography variant='caption' style={{ color: '#94a3b8' }}>{lender.type}</Typography>
+                      <Divider style={{ borderColor: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
+                      <Typography variant='body2' style={{ color: '#cbd5e1' }}>Offer: {lender.amount}</Typography>
+                      <Typography variant='body2' style={{ color: '#cbd5e1', marginTop: 6 }}>Rate: {lender.rate}</Typography>
+                      <Chip label={lender.status} size='small' style={{ marginTop: 12, color: '#34d399', background: 'rgba(52, 211, 153, 0.12)' }} />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           </Paper>
 
           {/* ========================================================

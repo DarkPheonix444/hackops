@@ -42,14 +42,16 @@ const structure = [
   {
     id: 101,
     label: 'Borrower Form',
-    link: '/app/loan-forms?role=borrower',
+    link: '/app/loan-forms',
     icon: <PersonIcon />,
+    role: 'borrower',
   },
   {
     id: 102,
     label: 'Lender Form',
-    link: '/app/loan-forms?role=lender',
+    link: '/app/loan-forms',
     icon: <FolderIcon />,
+    role: 'lender',
   },
   {
     id: 99,

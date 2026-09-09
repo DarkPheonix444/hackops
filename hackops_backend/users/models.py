@@ -27,6 +27,11 @@ class User(AbstractUser):
     username=None
     email=models.EmailField(unique=True)
     name=models.CharField(max_length=255)
+    role=models.CharField(
+        max_length=20,
+        choices=[('borrower', 'Borrower'), ('lender', 'Lender')],
+        default='borrower',
+    )
 
     objects = UserManager()
 

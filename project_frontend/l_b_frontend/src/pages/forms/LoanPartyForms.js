@@ -10,22 +10,19 @@ import {
   Divider,
   Grid,
   MenuItem,
-  Tab,
-  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import HomeIcon from '@mui/icons-material/Home';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useSearchParams } from 'react-router-dom';
 
 import loanFormsService from '../../services/loanFormsService';
+import authService from '../../services/authService';
+import { useSearchParams } from 'react-router-dom';
 
 const borrowerInitialValues = {
   name: '',
@@ -351,7 +348,7 @@ function ProfileForm({ kind, values, onChange, onSubmit, saving }) {
   );
 }
 
-function DocumentsSection({ documents, onUpload, uploading }) {
+function DocumentsSection({ documents, onUpload, uploading, profileExists }) {
   const [documentType, setDocumentType] = useState('AADHAAR');
   const [file, setFile] = useState(null);
 
@@ -448,7 +445,7 @@ function DocumentsSection({ documents, onUpload, uploading }) {
           <Button
             type='submit'
             variant='contained'
-            disabled={!file || uploading}
+            disabled={!profileExists || !file || uploading}
             sx={{
               bgcolor: '#36d6c2',
               color: '#07111f',
@@ -470,6 +467,11 @@ function DocumentsSection({ documents, onUpload, uploading }) {
               'Upload Document'
             )}
           </Button>
+          {!profileExists && (
+            <Typography variant='caption' sx={{ color: '#fbbf24', width: '100%' }}>
+              Save borrower details before uploading documents.
+            </Typography>
+          )}
         </form>
       </Grid>
 
@@ -508,9 +510,9 @@ function DocumentsSection({ documents, onUpload, uploading }) {
 
 export default function LoanPartyForms() {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get('role') === 'lender' ? 1 : 0,
-  );
+  const requestedRole = searchParams.get('role');
+  const [role, setRole] = useState(null);
+  const [accountUser, setAccountUser] = useState(null);
   const [borrower, setBorrower] = useState(borrowerInitialValues);
   const [lender, setLender] = useState(lenderInitialValues);
   const [documents, setDocuments] = useState([]);
@@ -522,27 +524,55 @@ export default function LoanPartyForms() {
 
   useEffect(() => {
     const loadForms = async () => {
-      const [borrowerResponse, lenderResponse, documentsResponse] =
-        await Promise.allSettled([
+      const user = await authService.getMe();
+      setAccountUser(user);
+      const backendRole = requestedRole === 'lender' ? 'lender' : user.role;
+      setRole(backendRole);
+
+      if (backendRole === 'borrower') {
+        const [borrowerResponse, documentsResponse] = await Promise.allSettled([
           loanFormsService.getBorrowerProfile(),
-          loanFormsService.getLenderProfile(),
           loanFormsService.getBorrowerDocuments(),
         ]);
-      if (borrowerResponse.status === 'fulfilled') {
-        setBorrower({
-          ...borrowerInitialValues,
-          ...borrowerResponse.value.data,
+        if (borrowerResponse.status === 'fulfilled') {
+          setBorrower({
+            ...borrowerInitialValues,
+            name: user.name || '',
+            ...borrowerResponse.value.data,
+          });
+          setProfileExists(true);
+        } else {
+          setBorrower((previous) => ({ ...previous, name: user.name || '' }));
+        }
+        if (documentsResponse.status === 'fulfilled')
+          setDocuments(documentsResponse.value.data || []);
+      } else if (backendRole === 'lender') {
+        const lenderResponse = await loanFormsService.getLenderProfile();
+        if (lenderResponse) {
+          setLender({
+            ...lenderInitialValues,
+            company_name: user.name || '',
+            ...lenderResponse.data,
+          });
+        }
+      } else {
+        setNotice({
+          severity: 'error',
+          message: 'No borrower or lender profile is connected to this account.',
         });
-        setProfileExists(true);
       }
-      if (lenderResponse.status === 'fulfilled')
-        setLender({ ...lenderInitialValues, ...lenderResponse.value.data });
-      if (documentsResponse.status === 'fulfilled')
-        setDocuments(documentsResponse.value.data || []);
       setLoading(false);
     };
-    loadForms();
-  }, []);
+    loadForms().catch((error) => {
+      setNotice({
+        severity: 'error',
+        message:
+          error.response?.data?.detail ||
+          'Could not load your account details. Please sign in again.',
+      });
+      setLoading(false);
+    });
+  }, [requestedRole]);
 
   const handleChange = (setter) => (event) => {
     const { name, value } = event.target;
@@ -555,7 +585,7 @@ export default function LoanPartyForms() {
     setSaving(true);
     setNotice(null);
     try {
-      if (activeTab === 0) {
+      if (role === 'borrower') {
         const response = profileExists
           ? await loanFormsService.updateBorrowerProfile(borrower)
           : await loanFormsService.createBorrowerProfile(borrower);
@@ -741,11 +771,12 @@ export default function LoanPartyForms() {
             TRUSTLENS APPLICATION WORKFLOW
           </Typography>
           <Typography variant='h4' sx={{ fontWeight: 800, color: '#ffffff', mt: 0.5 }}>
-            Lender & Borrower Application Forms
+            {role === 'lender' ? 'Lender Profile' : 'Borrower Application Form'}
           </Typography>
           <Typography sx={{ color: '#94a3b8', mt: 1, maxWidth: 740, fontSize: '0.95rem' }}>
-            Submit comprehensive profile and financial details that power identity verification,
-            affordability analysis, and lender portfolio matching.
+            {role === 'lender'
+              ? 'Maintain the exact lender profile fields used by the backend for portfolio matching and lending decisions.'
+              : 'Submit comprehensive profile and financial details that power identity verification, affordability analysis, and lender portfolio matching.'}
           </Typography>
         </Box>
 
@@ -772,55 +803,8 @@ export default function LoanPartyForms() {
           </Alert>
         )}
 
-        {/* ROLE SELECTION TABS */}
-        <Card
-          sx={{
-            mb: 3.5,
-            bgcolor: '#0e1c2f',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 3,
-            boxShadow: '0 15px 25px -5px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          <Tabs
-            value={activeTab}
-            onChange={(_, value) => {
-              setActiveTab(value);
-              setNotice(null);
-            }}
-            variant='fullWidth'
-            sx={{
-              '& .MuiTab-root': {
-                color: '#94a3b8',
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                textTransform: 'none',
-                py: 2,
-                '&.Mui-selected': {
-                  color: '#36d6c2',
-                },
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: '#36d6c2',
-                height: 3,
-              },
-            }}
-          >
-            <Tab
-              icon={<PersonOutlineIcon />}
-              iconPosition='start'
-              label='Borrower Application'
-            />
-            <Tab
-              icon={<AccountBalanceIcon />}
-              iconPosition='start'
-              label='Lender Profile'
-            />
-          </Tabs>
-        </Card>
-
         {/* ACTIVE FORM */}
-        {activeTab === 0 ? (
+        {role === 'borrower' ? (
           <>
             <ProfileForm
               kind='borrower'
@@ -836,6 +820,7 @@ export default function LoanPartyForms() {
               documents={documents}
               onUpload={uploadDocument}
               uploading={uploading}
+              profileExists={profileExists}
             />
 
             {/* NEXT STEP BANNER */}
@@ -883,15 +868,34 @@ export default function LoanPartyForms() {
               </Button>
             </Box>
           </>
-        ) : (
-          <ProfileForm
-            kind='lender'
-            values={lender}
-            onChange={handleChange(setLender)}
-            onSubmit={saveProfile}
-            saving={saving}
-          />
-        )}
+        ) : role === 'lender' ? (
+          <>
+            <SectionCard
+              title='Backend Account Details'
+              description='Read-only account values returned by the current-user and lender-profile APIs.'
+            >
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant='caption' sx={{ color: '#94a3b8' }}>User Name</Typography>
+                <Typography sx={{ color: '#ffffff', fontWeight: 700 }}>{accountUser?.name || 'N/A'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant='caption' sx={{ color: '#94a3b8' }}>Email</Typography>
+                <Typography sx={{ color: '#ffffff', fontWeight: 700 }}>{accountUser?.email || 'N/A'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant='caption' sx={{ color: '#94a3b8' }}>Account Role</Typography>
+                <Typography sx={{ color: '#34d399', fontWeight: 700 }}>Lender</Typography>
+              </Grid>
+            </SectionCard>
+            <ProfileForm
+              kind='lender'
+              values={lender}
+              onChange={handleChange(setLender)}
+              onSubmit={saveProfile}
+              saving={saving}
+            />
+          </>
+        ) : null}
       </Box>
     </Box>
   );

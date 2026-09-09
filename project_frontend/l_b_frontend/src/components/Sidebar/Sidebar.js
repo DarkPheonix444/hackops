@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import { Drawer, IconButton, List } from '@mui/material';
 import { useTheme } from '@mui/material';
 import classNames from 'classnames';
@@ -17,11 +17,23 @@ import {
   useLayoutDispatch,
   toggleSidebar,
 } from '../../context/LayoutContext';
+import { signOut, useUserDispatch, useUserState } from '../../context/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 function Sidebar({ structure }) {
   let classes = useStyles();
   let theme = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+  const userDispatch = useUserDispatch();
+  const { userRole } = useUserState();
+  const identityIndex = structure.findIndex(
+    (link) => link.label === 'Identity Verification',
+  );
+  const visibleStructure = structure
+    .slice(0, identityIndex + 1)
+    .filter((link) => link.label !== 'Fill Loan Forms')
+    .filter((link) => !link.role || link.role === userRole);
 
   const toggleDrawer = (value) => (event) => {
     if (
@@ -84,7 +96,7 @@ function Sidebar({ structure }) {
         className={classes.sidebarList}
         classes={{ padding: classes.padding }}
       >
-        {structure.map(link => (
+        {visibleStructure.map(link => (
           <SidebarLink
             key={link.id}
             location={location}
@@ -93,6 +105,14 @@ function Sidebar({ structure }) {
             toggleDrawer={toggleDrawer(true)}
           />
         ))}
+        <SidebarLink
+          id='logout'
+          label='Logout'
+          icon={<LogoutIcon />}
+          location={location}
+          isSidebarOpened={!isPermanent ? !isSidebarOpened : isSidebarOpened}
+          click={() => signOut(userDispatch, navigate)}
+        />
       </List>
     </Drawer>
   );

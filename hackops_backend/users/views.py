@@ -20,10 +20,15 @@ class CurrentUserView(APIView):
     
     def get(self, request):
         user = request.user
+        role = user.role
+        if role == 'borrower' and hasattr(user, 'lender_profile') and not hasattr(user, 'borrower_profile'):
+            role = 'lender'
+
         return Response({
             'id': str(user.id),
             'email': user.email,
             'name': user.name,
+            'role': role,
         }, status=status.HTTP_200_OK)
 
 # Create your views here.
