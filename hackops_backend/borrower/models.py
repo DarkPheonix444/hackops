@@ -447,6 +447,7 @@ class BorrowerVerification(models.Model):
     def masked_pan(self):
         pan = (self.borrower.pan_number or "").strip()
         if len(pan) == 10:
-            return f"{pan[:2]}XXXXX{pan[-2:]}"
+            return f"{pan[:2]}XXXXX{pan[-3:]}"
         return "XXXXXXXXXX"
+
 

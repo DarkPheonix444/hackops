@@ -259,7 +259,8 @@ class TrustLensVerificationEngine:
 
         # Masked Identity for privacy
         masked_aadhaar = f"XXXX-XXXX-{aadhaar_number[-4:]}" if len(aadhaar_number) >= 4 else "XXXX-XXXX-XXXX"
-        masked_pan = f"{pan_number[:2]}XXXXX{pan_number[-2:]}" if len(pan_number) == 10 else "XXXXXXXXXX"
+        masked_pan = f"{pan_number[:2]}XXXXX{pan_number[-3:]}" if len(pan_number) == 10 else "XXXXXXXXXX"
+
 
         details["masked_identity"] = {
             "aadhaar": masked_aadhaar,
