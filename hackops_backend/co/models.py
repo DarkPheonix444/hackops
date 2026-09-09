@@ -1,6 +1,5 @@
-from django.db import models
-
 from borrower.models import BorrowerDocument
+from django.db import models
 
 
 class DocumentProcessing(models.Model):

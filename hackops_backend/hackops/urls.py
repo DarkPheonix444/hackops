@@ -34,15 +34,8 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/borrower/', include('borrower.urls')),
     path('api/lender/', include('lender.urls')),
-<<<<<<< HEAD
     path('api/co/', include('co.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-=======
-]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
->>>>>>> 21ef2a1cdac93b95151b4d4b117e1282efa2bd69

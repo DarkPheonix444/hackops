@@ -1,3 +1,5 @@
+import logging
+
 from borrower.models import Borrower, BorrowerDocument
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,6 +11,9 @@ from .serializers import (
 	BorrowerDocumentIngestionSerializer,
 	DocumentProcessingSerializer,
 )
+from .services.document_processing import process_borrower_document
+
+logger = logging.getLogger(__name__)
 
 
 class BorrowerDocumentListView(APIView):
@@ -46,13 +51,24 @@ class DocumentProcessView(APIView):
 				status=status.HTTP_403_FORBIDDEN,
 			)
 
-		processing, created = DocumentProcessing.objects.get_or_create(
-			document=document,
-		)
-		return Response(
-			DocumentProcessingSerializer(processing).data,
-			status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-		)
+		try:
+			processing, result = process_borrower_document(document)
+		except Exception as exc:
+			logger.error(
+				"Document processing failed for %s: %s",
+				document.pk,
+				exc,
+			)
+			processing = DocumentProcessing.objects.get(document=document)
+			return Response(
+				DocumentProcessingSerializer(processing).data,
+				status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+			)
+
+		response_data = DocumentProcessingSerializer(processing).data
+		response_data["page_count"] = result["page_count"]
+		response_data["source_type"] = result["source_type"]
+		return Response(response_data, status=status.HTTP_200_OK)
 
 	def get(self, request, document_id):
 		try:
