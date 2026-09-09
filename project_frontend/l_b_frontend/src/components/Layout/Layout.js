@@ -23,6 +23,7 @@ import EditUser from '../../pages/user/EditUser';
 // pages
 import Dashboard from '../../pages/dashboard';
 import Profile from '../../pages/profile'
+import VerificationPage from '../../pages/verification/VerificationPage';
 import TypographyPage from '../../pages/typography'
 import ColorsPage from '../../pages/colors'
 import GridPage from '../../pages/grid'
@@ -104,6 +105,7 @@ function Layout() {
         <BreadCrumbs />
         <Routes>
           <Route path='dashboard' element={<Dashboard />} />
+          <Route path='verification' element={<VerificationPage />} />
           <Route path='profile' element={<Profile />} />
           <Route path='user/edit' element={<EditUser />} />
 

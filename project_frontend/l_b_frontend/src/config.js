@@ -7,18 +7,20 @@ const hostApi = backendUrlEnv
     ? 'http://127.0.0.1'
     : 'http://localhost';
 const baseURLApi = backendUrlEnv
-  ? (backendUrlEnv.endsWith('/api') ? backendUrlEnv : `${backendUrlEnv}/api`)
+  ? backendUrlEnv.endsWith('/api')
+    ? backendUrlEnv
+    : `${backendUrlEnv}/api`
   : `${hostApi}${portApi ? `:${portApi}` : ''}/api`;
-
 const redirectUrl = isDevelopment
   ? 'http://localhost:3000'
   : typeof window !== 'undefined'
     ? window.location.origin
     : 'http://localhost:3000';
 
-const isBackend = import.meta.env.VITE_BACKEND !== undefined
-  ? String(import.meta.env.VITE_BACKEND).toLowerCase() === 'true'
-  : true; // Default to true so it connects to real Django backend
+const isBackend =
+  import.meta.env.VITE_BACKEND !== undefined
+    ? String(import.meta.env.VITE_BACKEND).toLowerCase() === 'true'
+    : true; // Default to true so it connects to real Django backend
 
 const appConfig = {
   hostApi,
@@ -47,4 +49,3 @@ const appConfig = {
 };
 
 export default appConfig;
-

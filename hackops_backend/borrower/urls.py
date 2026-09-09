@@ -1,28 +1,29 @@
-
 from django.urls import path
 
 from .views import (
     BorrowerProfileView,
     BorrowerDocumentUploadView,
     SubmitBorrowerApplicationView,
+    VerificationStartView,
+    VerificationSubmitView,
+    VerificationStatusView,
+    VerificationResultView,
 )
 
-
 urlpatterns = [
-    path(
-        "profile/",
-        BorrowerProfileView.as_view(),
-        name="borrower-profile"
-    ),
+    # Borrower Profile Management
+    path("", BorrowerProfileView.as_view(), name="borrower-root"),
+    path("profile/", BorrowerProfileView.as_view(), name="borrower-profile"),
 
-    path(
-        "documents/",
-        BorrowerDocumentUploadView.as_view(),
-        name="borrower-documents"
-    ),
+    # Document Uploads
+    path("documents/", BorrowerDocumentUploadView.as_view(), name="borrower-documents"),
 
-    path(
-        "submit/",
-        SubmitBorrowerApplicationView.as_view(),
-        name="borrower-submit"
-    ),]
+    # Application Submission
+    path("submit/", SubmitBorrowerApplicationView.as_view(), name="borrower-submit"),
+
+    # TrustLens Identity & Document Verification Module
+    path("verification/start/", VerificationStartView.as_view(), name="verification-start"),
+    path("verification/submit/", VerificationSubmitView.as_view(), name="verification-submit"),
+    path("verification/status/", VerificationStatusView.as_view(), name="verification-status"),
+    path("verification/result/", VerificationResultView.as_view(), name="verification-result"),
+]

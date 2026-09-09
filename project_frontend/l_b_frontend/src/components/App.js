@@ -18,6 +18,7 @@ import Login from '../pages/login';
 import Verify from '../pages/verify';
 import Reset from '../pages/reset';
 import Homepage from '../pages/homepage/Homepage';
+import VerificationPage from '../pages/verification/VerificationPage';
 
 // context
 import { useUserState } from '../context/UserContext';
@@ -75,6 +76,8 @@ export default function App() {
                 </PublicRoute>
               }
             />
+            <Route path='/verification' element={<VerificationPage />} />
+            <Route path='/app/verification' element={<VerificationPage />} />
             <Route path='*' element={<Error />} />
           </Routes>
         </BrowserRouter>
@@ -100,7 +103,6 @@ export default function App() {
     return children;
   }
 }
-
 
 function RouterNavigatorSync() {
   const navigate = useNavigate();
