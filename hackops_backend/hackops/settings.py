@@ -43,12 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'borrower',
     'corsheaders',
     "rest_framework",
     "users",
-    "lender",
-    "co",
+
 ]
 
 AUTH_USER_MODEL = "users.User"
