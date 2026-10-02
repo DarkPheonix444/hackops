@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api.js'
+import DashboardLayout from '../components/DashboardLayout.jsx'
+import Alert from '../components/Alert.jsx'
+import Button from '../components/Button.jsx'
+import Card from '../components/Card.jsx'
+import FormField from '../components/FormField.jsx'
+import FormSection from '../components/FormSection.jsx'
+import OnboardingProgress from '../components/OnboardingProgress.jsx'
 
 // Only these borrower-specific fields are handled on this page.
 const BORROWER_FIELDS = [
@@ -13,13 +20,13 @@ const BORROWER_FIELDS = [
 ]
 
 const BANK_FIELDS = [
-  { name: 'bank_name', label: 'Bank Name', type: 'text', maxLength: 255 },
-  { name: 'account_number', label: 'Account Number', type: 'text', maxLength: 20 },
-  { name: 'ifsc_code', label: 'IFSC Code', type: 'text', maxLength: 11 },
+  { name: 'bank_name', label: 'Bank Name', type: 'text', maxLength: 255, required: true },
+  { name: 'account_number', label: 'Account Number', type: 'text', maxLength: 20, required: true },
+  { name: 'ifsc_code', label: 'IFSC Code', type: 'text', maxLength: 11, required: true },
 ]
 
 const ASSET_FIELDS = [
-  { name: 'total_asset_value', label: 'Total Asset Value', type: 'number', step: '0.01', min: 0 },
+  { name: 'total_asset_value', label: 'Total Asset Value', type: 'number', step: '0.01', min: 0, required: true },
   { name: 'credit_score', label: 'Credit Score', type: 'number', min: 0 },
 ]
 
@@ -53,6 +60,25 @@ const hasBorrowerData = (data) =>
     const value = data[name]
     return value !== null && value !== undefined && value !== '' && value !== false
   })
+
+// Validate the required borrower fields. existing_monthly_emi is
+// conditionally required: only when has_existing_loan is true.
+const validateForm = (values) => {
+  const newErrors = {}
+  for (const field of [...BANK_FIELDS, ...ASSET_FIELDS]) {
+    if (field.required) {
+      const value = values[field.name]
+      if (typeof value !== 'string' || value.trim() === '') {
+        newErrors[field.name] = `${field.label} is required.`
+      }
+    }
+  }
+  if (values.has_existing_loan && (values.existing_monthly_emi || '').trim() === '') {
+    newErrors.existing_monthly_emi =
+      'Existing Monthly EMI is required when you have an existing loan.'
+  }
+  return newErrors
+}
 
 function BorrowerProfile() {
   const navigate = useNavigate()
@@ -130,6 +156,14 @@ function BorrowerProfile() {
     setGeneralError('')
     setSuccess('')
 
+    // Frontend validation: block submission until every required
+    // field is filled in (and the EMI is provided for existing loans).
+    const validationErrors = validateForm(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+
     setSubmitting(true)
     try {
       // Send only filled-in fields; the loan checkbox state is always sent.
@@ -180,107 +214,114 @@ function BorrowerProfile() {
   }
 
   const renderField = (field) => (
-    <div key={field.name}>
-      <label htmlFor={field.name} style={{ display: 'block', marginBottom: '4px' }}>
-        {field.label}
-      </label>
-      <input
-        id={field.name}
-        name={field.name}
-        type={field.type}
-        value={form[field.name]}
-        onChange={handleChange}
-        maxLength={field.maxLength}
-        min={field.min}
-        step={field.step}
-        style={{ width: '100%' }}
-      />
-      {errors[field.name] && (
-        <p style={{ color: 'red', margin: '4px 0 0' }}>{errors[field.name]}</p>
-      )}
-    </div>
+    <FormField
+      key={field.name}
+      label={field.label}
+      name={field.name}
+      type={field.type}
+      required={field.required}
+      error={errors[field.name]}
+      value={form[field.name]}
+      onChange={handleChange}
+      maxLength={field.maxLength}
+      min={field.min}
+      step={field.step}
+    />
   )
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
-      <h1>Borrower Profile</h1>
+    <DashboardLayout
+      nav={[
+        { label: 'Common Profile', to: '/common-profile' },
+        { label: 'Borrower Profile', to: '/borrower-profile', current: true },
+      ]}
+    >
+      <div className="ui-page-header">
+        <span className="ui-eyebrow">Onboarding</span>
+        <h1 className="ui-page-title">Borrower Profile</h1>
+        <p className="ui-page-subtitle">
+          Add your banking details and tell us about any existing loans
+          and assets so lenders can evaluate your application.
+        </p>
+        {!loading && !commonProfileMissing && (
+          <OnboardingProgress
+            current={1}
+            steps={[
+              { label: 'Common Profile', to: '/common-profile' },
+              { label: 'Borrower Profile' },
+            ]}
+          />
+        )}
+      </div>
 
       {loading ? (
-        <p>Loading profile...</p>
+        <p className="ui-loading">Loading profile...</p>
       ) : commonProfileMissing ? (
-        <div>
-          <p>Please complete your Common Profile first before adding borrower details.</p>
-          <Link to="/common-profile">Go to Common Profile</Link>
-        </div>
+        <Card>
+          <h2 className="ui-form-section-title">Common Profile required</h2>
+          <p className="ui-form-section-description" style={{ marginBottom: '20px' }}>
+            Please complete your Common Profile first before adding
+            borrower details.
+          </p>
+          <Button to="/common-profile" variant="primary">
+            Go to Common Profile
+          </Button>
+        </Card>
       ) : (
-        <form onSubmit={handleSubmit}>
-          {success && <p style={{ color: 'green' }}>{success}</p>}
-          {generalError && <p style={{ color: 'red' }}>{generalError}</p>}
+        <form onSubmit={handleSubmit} noValidate>
+          {success && <Alert variant="success">{success}</Alert>}
+          {generalError && <Alert variant="error">{generalError}</Alert>}
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Bank Details</h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-              }}
-            >
-              {BANK_FIELDS.map(renderField)}
-            </div>
-          </section>
+          <FormSection
+            title="Bank Details"
+            description="The account loan disbursements and repayments happen through."
+          >
+            {BANK_FIELDS.map(renderField)}
+          </FormSection>
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Existing Loan</h2>
-            <label style={{ display: 'block', marginBottom: '12px' }}>
+          <FormSection
+            title="Existing Loan"
+            description="Tell us if you are already repaying a loan."
+          >
+            <label className="ui-checkbox-row">
               <input
                 type="checkbox"
+                className="ui-checkbox"
                 name="has_existing_loan"
                 checked={form.has_existing_loan}
                 onChange={handleLoanChange}
-              />{' '}
+              />
               I have an existing loan
             </label>
-            <div style={{ maxWidth: '240px' }}>
-              <label htmlFor="existing_monthly_emi" style={{ display: 'block', marginBottom: '4px' }}>
-                Existing Monthly EMI
-              </label>
-              <input
-                id="existing_monthly_emi"
+            <div className="ui-narrow">
+              <FormField
+                label="Existing Monthly EMI"
                 name="existing_monthly_emi"
                 type="number"
                 step="0.01"
                 min="0"
+                required={form.has_existing_loan}
+                disabled={!form.has_existing_loan}
+                error={errors.existing_monthly_emi}
                 value={form.existing_monthly_emi}
                 onChange={handleChange}
-                disabled={!form.has_existing_loan}
-                style={{ width: '100%' }}
               />
-              {errors.existing_monthly_emi && (
-                <p style={{ color: 'red', margin: '4px 0 0' }}>{errors.existing_monthly_emi}</p>
-              )}
             </div>
-          </section>
+          </FormSection>
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Assets &amp; Credit</h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-              }}
-            >
-              {ASSET_FIELDS.map(renderField)}
-            </div>
-          </section>
+          <FormSection
+            title="Assets &amp; Credit"
+            description="Your total assets and, if known, your credit score."
+          >
+            {ASSET_FIELDS.map(renderField)}
+          </FormSection>
 
-          <button type="submit" disabled={submitting}>
+          <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Saving...' : profileFilled ? 'Update Profile' : 'Save & Continue'}
-          </button>
+          </Button>
         </form>
       )}
-    </div>
+    </DashboardLayout>
   )
 }
 

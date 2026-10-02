@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api.js'
+import AuthLayout from '../components/AuthLayout.jsx'
+import Alert from '../components/Alert.jsx'
+import Button from '../components/Button.jsx'
+import FormField from '../components/FormField.jsx'
+
+const ROLE_OPTIONS = [
+  { value: 'borrower', label: 'Borrower' },
+  { value: 'lender', label: 'Lender' },
+]
 
 function getError(err) {
   const data = err.response?.data
@@ -34,63 +43,59 @@ function Signup() {
   }
 
   return (
-    <div>
-      <h1>Signup</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
+    <AuthLayout
+      title="Create your account"
+      subtitle="Join HackOps and start your structured lending journey."
+      footer={
+        <>
+          Already have an account? <Link to="/login">Log in</Link>
+        </>
+      }
+    >
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">Name</label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            minLength={8}
-          />
-        </div>
-        <div>
-          <label htmlFor="role">Role</label>
-          <select
-            id="role"
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-          >
-            <option value="borrower">Borrower</option>
-            <option value="lender">Lender</option>
-          </select>
-        </div>
-        <button type="submit">Signup</button>
+        {error && <Alert variant="error">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+        <FormField
+          label="Full Name"
+          name="name"
+          type="text"
+          required
+          autoComplete="name"
+          value={form.name}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          value={form.email}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Password"
+          name="password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          value={form.password}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Role"
+          name="role"
+          type="select"
+          options={ROLE_OPTIONS}
+          value={form.role}
+          onChange={handleChange}
+        />
+        <Button type="submit" variant="primary" block>
+          Create account
+        </Button>
       </form>
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
-    </div>
+    </AuthLayout>
   )
 }
 

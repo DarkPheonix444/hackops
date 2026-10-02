@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api.js'
+import DashboardLayout from '../components/DashboardLayout.jsx'
+import Alert from '../components/Alert.jsx'
+import Button from '../components/Button.jsx'
+import Card from '../components/Card.jsx'
+import FormField from '../components/FormField.jsx'
+import FormSection from '../components/FormSection.jsx'
+import OnboardingProgress from '../components/OnboardingProgress.jsx'
 
 // Only these lender-specific fields are handled on this page.
 const LENDER_FIELDS = [
@@ -32,21 +39,21 @@ const RISK_PREFERENCE_OPTIONS = [
 ]
 
 const LENDING_FIELDS = [
-  { name: 'amount_willing_to_lend', label: 'Amount Willing to Lend', type: 'number', step: '0.01', min: 0 },
-  { name: 'minimum_lending_amount', label: 'Minimum Lending Amount', type: 'number', step: '0.01', min: 0 },
-  { name: 'maximum_lending_amount', label: 'Maximum Lending Amount', type: 'number', step: '0.01', min: 0 },
-  { name: 'lender_total_asset_value', label: 'Total Asset Value', type: 'number', step: '0.01', min: 0 },
+  { name: 'amount_willing_to_lend', label: 'Amount Willing to Lend', type: 'number', step: '0.01', min: 0, required: true },
+  { name: 'minimum_lending_amount', label: 'Minimum Lending Amount', type: 'number', step: '0.01', min: 0, required: true },
+  { name: 'maximum_lending_amount', label: 'Maximum Lending Amount', type: 'number', step: '0.01', min: 0, required: true },
+  { name: 'lender_total_asset_value', label: 'Total Asset Value', type: 'number', step: '0.01', min: 0, required: true },
 ]
 
 const LENDER_BANK_FIELDS = [
-  { name: 'lender_bank_name', label: 'Bank Name', type: 'text', maxLength: 255 },
-  { name: 'lender_account_number', label: 'Account Number', type: 'text', maxLength: 20 },
-  { name: 'lender_ifsc_code', label: 'IFSC Code', type: 'text', maxLength: 11 },
+  { name: 'lender_bank_name', label: 'Bank Name', type: 'text', maxLength: 255, required: true },
+  { name: 'lender_account_number', label: 'Account Number', type: 'text', maxLength: 20, required: true },
+  { name: 'lender_ifsc_code', label: 'IFSC Code', type: 'text', maxLength: 11, required: true },
 ]
 
 const PREFERENCE_FIELDS = [
-  { name: 'preferred_loan_type', label: 'Preferred Loan Type', type: 'select', options: PREFERRED_LOAN_TYPE_OPTIONS },
-  { name: 'risk_preference', label: 'Risk Preference', type: 'select', options: RISK_PREFERENCE_OPTIONS },
+  { name: 'preferred_loan_type', label: 'Preferred Loan Type', type: 'select', options: PREFERRED_LOAN_TYPE_OPTIONS, required: true },
+  { name: 'risk_preference', label: 'Risk Preference', type: 'select', options: RISK_PREFERENCE_OPTIONS, required: true },
 ]
 
 const EMPTY_FORM = {
@@ -83,6 +90,21 @@ const hasLenderData = (data) =>
     const value = data[name]
     return value !== null && value !== undefined && value !== ''
   })
+
+// Validate the required lender fields. Every lender-specific
+// field is required by the backend.
+const validateForm = (values) => {
+  const newErrors = {}
+  for (const field of [...LENDING_FIELDS, ...LENDER_BANK_FIELDS, ...PREFERENCE_FIELDS]) {
+    if (field.required) {
+      const value = values[field.name]
+      if (typeof value !== 'string' || value.trim() === '') {
+        newErrors[field.name] = `${field.label} is required.`
+      }
+    }
+  }
+  return newErrors
+}
 
 function LenderProfile() {
   const navigate = useNavigate()
@@ -156,6 +178,14 @@ function LenderProfile() {
     setGeneralError('')
     setSuccess('')
 
+    // Frontend validation: block submission until every
+    // required lender field is filled in.
+    const validationErrors = validateForm(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+
     setSubmitting(true)
     try {
       // Send only filled-in fields so empty optional fields keep
@@ -202,104 +232,92 @@ function LenderProfile() {
   }
 
   const renderField = (field) => (
-    <div key={field.name}>
-      <label htmlFor={field.name} style={{ display: 'block', marginBottom: '4px' }}>
-        {field.label}
-      </label>
-      {field.type === 'select' ? (
-        <select
-          id={field.name}
-          name={field.name}
-          value={form[field.name]}
-          onChange={handleChange}
-          style={{ width: '100%' }}
-        >
-          {field.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          id={field.name}
-          name={field.name}
-          type={field.type}
-          value={form[field.name]}
-          onChange={handleChange}
-          maxLength={field.maxLength}
-          min={field.min}
-          step={field.step}
-          style={{ width: '100%' }}
-        />
-      )}
-      {errors[field.name] && (
-        <p style={{ color: 'red', margin: '4px 0 0' }}>{errors[field.name]}</p>
-      )}
-    </div>
+    <FormField
+      key={field.name}
+      label={field.label}
+      name={field.name}
+      type={field.type}
+      options={field.options}
+      required={field.required}
+      error={errors[field.name]}
+      value={form[field.name]}
+      onChange={handleChange}
+      maxLength={field.maxLength}
+      min={field.min}
+      step={field.step}
+    />
   )
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
-      <h1>Lender Profile</h1>
+    <DashboardLayout
+      nav={[
+        { label: 'Common Profile', to: '/common-profile' },
+        { label: 'Lender Profile', to: '/lender-profile', current: true },
+      ]}
+    >
+      <div className="ui-page-header">
+        <span className="ui-eyebrow">Onboarding</span>
+        <h1 className="ui-page-title">Lender Profile</h1>
+        <p className="ui-page-subtitle">
+          Tell us how much you would like to lend, from which account,
+          and what kinds of loans you prefer.
+        </p>
+        {!loading && !commonProfileMissing && (
+          <OnboardingProgress
+            current={1}
+            steps={[
+              { label: 'Common Profile', to: '/common-profile' },
+              { label: 'Lender Profile' },
+            ]}
+          />
+        )}
+      </div>
 
       {loading ? (
-        <p>Loading profile...</p>
+        <p className="ui-loading">Loading profile...</p>
       ) : commonProfileMissing ? (
-        <div>
-          <p>Please complete your Common Profile first before adding lender details.</p>
-          <Link to="/common-profile">Go to Common Profile</Link>
-        </div>
+        <Card>
+          <h2 className="ui-form-section-title">Common Profile required</h2>
+          <p className="ui-form-section-description" style={{ marginBottom: '20px' }}>
+            Please complete your Common Profile first before adding
+            lender details.
+          </p>
+          <Button to="/common-profile" variant="primary">
+            Go to Common Profile
+          </Button>
+        </Card>
       ) : (
-        <form onSubmit={handleSubmit}>
-          {success && <p style={{ color: 'green' }}>{success}</p>}
-          {generalError && <p style={{ color: 'red' }}>{generalError}</p>}
+        <form onSubmit={handleSubmit} noValidate>
+          {success && <Alert variant="success">{success}</Alert>}
+          {generalError && <Alert variant="error">{generalError}</Alert>}
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Financial / Lending</h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-              }}
-            >
-              {LENDING_FIELDS.map(renderField)}
-            </div>
-          </section>
+          <FormSection
+            title="Financial / Lending"
+            description="How much you are willing to lend and your total assets."
+          >
+            {LENDING_FIELDS.map(renderField)}
+          </FormSection>
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Bank Details</h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-              }}
-            >
-              {LENDER_BANK_FIELDS.map(renderField)}
-            </div>
-          </section>
+          <FormSection
+            title="Bank Details"
+            description="The account payouts to borrowers happen through."
+          >
+            {LENDER_BANK_FIELDS.map(renderField)}
+          </FormSection>
 
-          <section style={{ marginBottom: '24px' }}>
-            <h2>Preferences</h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-              }}
-            >
-              {PREFERENCE_FIELDS.map(renderField)}
-            </div>
-          </section>
+          <FormSection
+            title="Preferences"
+            description="The kinds of loans and risk levels you prefer."
+          >
+            {PREFERENCE_FIELDS.map(renderField)}
+          </FormSection>
 
-          <button type="submit" disabled={submitting}>
+          <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Saving...' : profileFilled ? 'Update Profile' : 'Save & Continue'}
-          </button>
+          </Button>
         </form>
       )}
-    </div>
+    </DashboardLayout>
   )
 }
 

@@ -20,7 +20,7 @@ class UserManager(BaseUserManager):
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(email, password=password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -110,61 +110,64 @@ class CommonProfile(models.Model):
     )
 
     # --- Personal Details ---
-    full_name = models.CharField(max_length=255)
-    date_of_birth = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
-    phone_number = models.CharField(max_length=15, blank=True)
+    full_name = models.CharField(max_length=255, null=False, blank=False)
+    date_of_birth = models.DateField(null=False, blank=False)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=False, blank=False)
+    phone_number = models.CharField(max_length=15, null=False, blank=False)
     alternate_phone_number = models.CharField(max_length=15, blank=True)
-    marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True)
-    nationality = models.CharField(max_length=100, blank=True)
+    marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, null=False, blank=False)
+    nationality = models.CharField(max_length=100, null=False, blank=False)
 
     # --- Family Details ---
-    father_name = models.CharField(max_length=255, blank=True)
-    mother_name = models.CharField(max_length=255, blank=True)
+    father_name = models.CharField(max_length=255, null=False, blank=False)
+    mother_name = models.CharField(max_length=255, null=False, blank=False)
+    # Conditionally required: only when marital_status == 'married' (enforced in serializer)
     spouse_name = models.CharField(max_length=255, blank=True)
-    number_of_dependents = models.PositiveIntegerField(default=0)
+    number_of_dependents = models.PositiveIntegerField(default=0, null=False, blank=False)
 
-    # --- Income Details ---
-    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, blank=True)
-    occupation = models.CharField(max_length=255, blank=True)
-    employer_or_business_name = models.CharField(max_length=255, blank=True)
-    monthly_income = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    annual_income = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    years_of_experience = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    # --- Income / Employment Details ---
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, null=False, blank=False)
+    occupation = models.CharField(max_length=255, null=False, blank=False)
+    employer_or_business_name = models.CharField(max_length=255, null=False, blank=False)
+    monthly_income = models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
+    annual_income = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    years_of_experience = models.DecimalField(max_digits=4, decimal_places=1, null=False, blank=False)
 
     # --- Residential Details ---
-    address_line = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
-    pincode = models.CharField(max_length=6, blank=True)
-    residence_type = models.CharField(max_length=20, choices=RESIDENCE_TYPE_CHOICES, blank=True)
-    years_at_current_address = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    address_line = models.CharField(max_length=255, null=False, blank=False)
+    city = models.CharField(max_length=100, null=False, blank=False)
+    state = models.CharField(max_length=100, null=False, blank=False)
+    pincode = models.CharField(max_length=6, null=False, blank=False)
+    residence_type = models.CharField(max_length=20, choices=RESIDENCE_TYPE_CHOICES, null=False, blank=False)
+    years_at_current_address = models.DecimalField(max_digits=4, decimal_places=1, null=False, blank=False)
 
     # --- KYC Details ---
-    aadhaar_number = models.CharField(max_length=12, blank=True)
-    pan_number = models.CharField(max_length=10, blank=True)
+    aadhaar_number = models.CharField(max_length=12, null=False, blank=False)
+    pan_number = models.CharField(max_length=10, null=False, blank=False)
 
     # --- Borrower-specific Financial/Banking Details ---
     # Filled during borrower onboarding based on CommonProfile.role
-    bank_name = models.CharField(max_length=255, blank=True)
-    account_number = models.CharField(max_length=20, blank=True)
-    ifsc_code = models.CharField(max_length=11, blank=True)
-    has_existing_loan = models.BooleanField(default=False)
+    bank_name = models.CharField(max_length=255, null=False, blank=False)
+    account_number = models.CharField(max_length=20, null=False, blank=False)
+    ifsc_code = models.CharField(max_length=11, null=False, blank=False)
+    has_existing_loan = models.BooleanField(default=False, null=False, blank=False)
+    # Conditionally required: only when has_existing_loan is True (enforced in serializer)
     existing_monthly_emi = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    total_asset_value = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    total_asset_value = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    # Credit verification is handled in a later layer; kept optional for now
     credit_score = models.IntegerField(null=True, blank=True)
 
     # --- Lender-specific Lending Details ---
     # Filled during lender onboarding based on CommonProfile.role
-    amount_willing_to_lend = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    minimum_lending_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    maximum_lending_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    lender_total_asset_value = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    lender_bank_name = models.CharField(max_length=255, blank=True)
-    lender_account_number = models.CharField(max_length=20, blank=True)
-    lender_ifsc_code = models.CharField(max_length=11, blank=True)
-    preferred_loan_type = models.CharField(max_length=20, choices=PREFERRED_LOAN_TYPE_CHOICES, blank=True)
-    risk_preference = models.CharField(max_length=10, choices=RISK_PREFERENCE_CHOICES, blank=True)
+    amount_willing_to_lend = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    minimum_lending_amount = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    maximum_lending_amount = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    lender_total_asset_value = models.DecimalField(max_digits=14, decimal_places=2, null=False, blank=False)
+    lender_bank_name = models.CharField(max_length=255, null=False, blank=False)
+    lender_account_number = models.CharField(max_length=20, null=False, blank=False)
+    lender_ifsc_code = models.CharField(max_length=11, null=False, blank=False)
+    preferred_loan_type = models.CharField(max_length=20, choices=PREFERRED_LOAN_TYPE_CHOICES, null=False, blank=False)
+    risk_preference = models.CharField(max_length=10, choices=RISK_PREFERENCE_CHOICES, null=False, blank=False)
 
     def __str__(self):
         return f"{self.full_name or self.user.email} ({self.role})"

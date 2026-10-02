@@ -48,6 +48,24 @@ class CommonProfileSerializer(serializers.ModelSerializer):
 
     role = serializers.ChoiceField(choices=CommonProfile.ROLE_CHOICES)
 
+    def validate(self, attrs):
+        # spouse_name is conditionally required: only for married users.
+        # On partial updates, fall back to the stored profile values so a
+        # married user who already provided a spouse_name can patch other
+        # fields without resending it.
+        marital_status = attrs.get('marital_status')
+        if marital_status is None and self.instance is not None:
+            marital_status = self.instance.marital_status
+        if marital_status == 'married':
+            spouse_name = attrs.get('spouse_name')
+            if spouse_name is None and self.instance is not None:
+                spouse_name = self.instance.spouse_name
+            if not spouse_name:
+                raise serializers.ValidationError({
+                    'spouse_name': 'This field is required when marital_status is married.'
+                })
+        return attrs
+
     class Meta:
         model = CommonProfile
         fields = [
@@ -92,6 +110,28 @@ class BorrowerProfileSerializer(serializers.ModelSerializer):
     Borrower-only onboarding information (bank, existing loans, assets, credit).
     Bank statement uploads are handled later by a separate document/upload layer.
     """
+
+    # Required in the request body: the model-level default=False would
+    # otherwise make DRF treat this field as optional-with-default.
+    has_existing_loan = serializers.BooleanField()
+
+    def validate(self, attrs):
+        # existing_monthly_emi is conditionally required: only when the
+        # borrower has an existing loan. On partial updates, fall back to the
+        # stored profile values so a borrower who already provided an EMI can
+        # patch other fields without resending it.
+        has_existing_loan = attrs.get('has_existing_loan')
+        if has_existing_loan is None and self.instance is not None:
+            has_existing_loan = self.instance.has_existing_loan
+        if has_existing_loan:
+            existing_monthly_emi = attrs.get('existing_monthly_emi')
+            if existing_monthly_emi is None and self.instance is not None:
+                existing_monthly_emi = self.instance.existing_monthly_emi
+            if existing_monthly_emi is None:
+                raise serializers.ValidationError({
+                    'existing_monthly_emi': 'This field is required when has_existing_loan is True.'
+                })
+        return attrs
 
     class Meta:
         model = CommonProfile

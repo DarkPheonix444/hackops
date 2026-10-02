@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api.js'
+import AuthLayout from '../components/AuthLayout.jsx'
+import Alert from '../components/Alert.jsx'
+import Button from '../components/Button.jsx'
+import FormField from '../components/FormField.jsx'
 
 function getError(err) {
   const data = err.response?.data
@@ -37,38 +41,40 @@ function Login() {
   }
 
   return (
-    <div>
-      <h1>Login</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Log in to your HackOps account to continue."
+      footer={
+        <>
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </>
+      }
+    >
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button type="submit">Login</button>
+        {error && <Alert variant="error">{error}</Alert>}
+        <FormField
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          value={form.email}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          value={form.password}
+          onChange={handleChange}
+        />
+        <Button type="submit" variant="primary" block>
+          Log in
+        </Button>
       </form>
-      <p>
-        Don't have an account? <Link to="/signup">Signup</Link>
-      </p>
-    </div>
+    </AuthLayout>
   )
 }
 
