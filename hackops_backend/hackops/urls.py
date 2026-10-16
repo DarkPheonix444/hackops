@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(serializer_class=CustomTokenObtainPairSerializer), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/users/', include('users.urls')),
+    path('api/documents/', include('documents.urls')),
 ]
 
 if settings.DEBUG:
