@@ -188,6 +188,23 @@ function CommonProfile() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  const findFirstInvalidField = () => {
+    // Look for fields with error state in the form DOM
+    const invalidFields = document.querySelectorAll('.ui-field.error')
+    return invalidFields.length > 0 ? invalidFields[0] : null
+  }
+
+  const scrollToAndFocusFirstError = () => {
+    const firstInvalid = findFirstInvalidField()
+    if (firstInvalid) {
+      const input = firstInvalid.querySelector('input, select')
+      if (input) {
+        input.focus()
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrors({})
@@ -198,6 +215,7 @@ function CommonProfile() {
     const validationErrors = validateForm(form)
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
+      scrollToAndFocusFirstError()
       return
     }
 
@@ -228,6 +246,7 @@ function CommonProfile() {
       const meResponse = await api.get('/me/')
       navigate(meResponse.data.role === 'lender' ? '/lender-profile' : '/borrower-profile')
     } catch (err) {
+      setSubmitting(false)
       const data = err.response?.data
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         // DRF returns field-keyed errors: { field_name: ['message'] }.
@@ -242,14 +261,16 @@ function CommonProfile() {
           }
         }
         setErrors(fieldErrors)
+        // Auto-scroll and focus the first field with a backend error
+        if (Object.keys(fieldErrors).length > 0) {
+          scrollToAndFocusFirstError()
+        }
         if (generalMessages.length > 0) {
           setGeneralError(generalMessages.join(' '))
         }
       } else {
         setGeneralError(err.message || 'Something went wrong. Please try again.')
       }
-    } finally {
-      setSubmitting(false)
     }
   }
 

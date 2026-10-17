@@ -5,6 +5,8 @@ import Login from './pages/Login.jsx'
 import CommonProfile from './pages/CommonProfile.jsx'
 import BorrowerProfile from './pages/BorrowerProfile.jsx'
 import LenderProfile from './pages/LenderProfile.jsx'
+import BorrowerDashboard from './pages/BorrowerDashboard.jsx'
+import LenderDashboard from './pages/LenderDashboard.jsx'
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/common-profile" element={<CommonProfile />} />
         <Route path="/borrower-profile" element={<BorrowerProfile />} />
         <Route path="/lender-profile" element={<LenderProfile />} />
+        <Route path="/borrower-dashboard" element={<BorrowerDashboard />} />
+        <Route path="/lender-dashboard" element={<LenderDashboard />} />
       </Routes>
     </BrowserRouter>
   )

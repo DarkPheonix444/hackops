@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api.js'
 import AuthLayout from '../components/AuthLayout.jsx'
 import Alert from '../components/Alert.jsx'
@@ -25,6 +25,8 @@ function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'borrower' })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -34,11 +36,15 @@ function Signup() {
     e.preventDefault()
     setError('')
     setSuccess('')
+    setSubmitting(true)
     try {
       await api.post('/signup/', form)
-      setSuccess('Account created successfully. You can now log in.')
+      setSuccess('Account created successfully. Please log in.')
+      navigate('/login')
     } catch (err) {
       setError(getError(err))
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -84,15 +90,15 @@ function Signup() {
           onChange={handleChange}
         />
         <FormField
-          label="Role"
+          label="Account Type"
           name="role"
           type="select"
           options={ROLE_OPTIONS}
           value={form.role}
           onChange={handleChange}
         />
-        <Button type="submit" variant="primary" block>
-          Create account
+        <Button type="submit" variant="primary" block disabled={submitting}>
+          {submitting ? 'Creating account...' : 'Create account'}
         </Button>
       </form>
     </AuthLayout>

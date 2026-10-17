@@ -9,12 +9,14 @@ import Footer from '../components/Footer.jsx'
 import '../components/Home.css'
 
 function Home() {
-  // Handle direct visits that include a section hash, e.g. /#how-it-works.
+  // Check authentication status on mount
   useEffect(() => {
-    const id = window.location.hash.replace('#', '')
-    if (id) {
-      const target = document.getElementById(id)
-      if (target) target.scrollIntoView()
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      // User is already logged in; redirect to onboarding
+      // The Login page already redirects to /common-profile after login,
+      // but handle the case of a direct visit when logged in.
+      window.location.replace('/common-profile')
     }
   }, [])
 
